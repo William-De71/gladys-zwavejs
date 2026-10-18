@@ -160,16 +160,17 @@ test('the operating state is discovered as a read-only thermostat feature', () =
   assert.equal(state.name, '16-66-1-state')
 })
 
-test('idle, heating and cooling are reported; the other Z-Wave states are not invented', () => {
-  const read = (raw: number) =>
-    mapper.convertValue(thermostat, valueOf(66, 'state'), raw).map((state) => state.state)
+function readOperatingState(raw: number) {
+  return mapper.convertValue(thermostat, valueOf(66, 'state'), raw).map((state) => state.state)
+}
 
-  assert.deepEqual(read(0), [0], 'idle')
-  assert.deepEqual(read(1), [1], 'heating')
-  assert.deepEqual(read(2), [2], 'cooling')
+test('idle, heating and cooling are reported; the other Z-Wave states are not invented', () => {
+  assert.deepEqual(readOperatingState(0), [0], 'idle')
+  assert.deepEqual(readOperatingState(1), [1], 'heating')
+  assert.deepEqual(readOperatingState(2), [2], 'cooling')
   // Fan only, pending heat, pending cool... have no Gladys equivalent: better
   // no state than a state the thermostat is not in.
-  assert.deepEqual(read(3), [])
+  assert.deepEqual(readOperatingState(3), [])
 })
 
 // ---------------------------------------------------------------------------

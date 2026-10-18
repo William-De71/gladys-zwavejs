@@ -15,16 +15,16 @@
     "test": "node --test \"test/**/*.test.ts\""
   },
   "dependencies": {
-    "@gladysassistant/integration-sdk": "^0.11.0",
-    "mqtt": "5.15.2"
+    "@gladysassistant/integration-sdk": "^0.15.0",
+    "mqtt": "5.16.1"
   },
   "devDependencies": {
-    "@types/node": "^24.13.3",
-    "oxfmt": "0.63.0",
-    "oxlint": "1.78.0",
+    "@types/node": "^26.6.5",
+    "oxfmt": "0.73.0",
+    "oxlint": "1.88.0",
     "typescript": "7.0.2"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=26"
   }
 }

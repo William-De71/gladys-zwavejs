@@ -10,7 +10,7 @@
 #   4. node --test  -> the built-in runner, including the golden test that
 #      asserts the mapping stays identical to the internal Gladys service.
 #
-# Runs on Node 24, the version the Docker image ships with (see the Dockerfile),
+# Runs on Node 26, the version the Docker image ships with (see the Dockerfile),
 # so the check exercises the exact runtime the integration runs on.
 # -----------------------------------------------------------------------------
 name: CI
@@ -32,7 +32,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
 
       - name: Install dependencies

@@ -352,7 +352,12 @@ export class ZwaveIntegration {
     this.client.requestNodes()
   }
 
-  setValue(device: Device, feature: DeviceFeature, value: number): void {
+  setValue(device: Device, feature: DeviceFeature, value: number | string): void {
+    // Gladys only sends strings to `text` features, and the mapping never
+    // produces one: a string here is a feature we did not create.
+    if (typeof value !== 'number') {
+      throw new Error(`Unexpected non-numeric value for "${feature.external_id}"`)
+    }
     this.commands.setValue(device, feature, value)
   }
 

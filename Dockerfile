@@ -12,7 +12,7 @@
 # the image. What ships is what was written.
 # -----------------------------------------------------------------------------
 
-FROM node:24-alpine
+FROM node:26-alpine
 
 # dumb-init: handles signals (SIGTERM) correctly for a graceful shutdown.
 RUN apk add --no-cache dumb-init

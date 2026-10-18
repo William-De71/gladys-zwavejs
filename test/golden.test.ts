@@ -103,9 +103,13 @@ const INTENTIONAL_DIVERGENCES: Array<{
   },
 ]
 
+/** Internal-service external id to its external-integration equivalent. */
+function rewrite(id: string) {
+  return id.replace(/^zwavejs-ui:/, `ext:${SELECTOR}:`)
+}
+
 /** Bring a golden device to the shape an external integration publishes. */
 function normalizeGolden(device: GoldenDevice) {
-  const rewrite = (id: string) => id.replace(/^zwavejs-ui:/, `ext:${SELECTOR}:`)
   const deviceOverrides = INTENTIONAL_DEVICE_DIVERGENCES.filter((divergence) =>
     divergence.applies(device),
   ).reduce((accumulator, divergence) => Object.assign(accumulator, divergence.override(device)), {})
