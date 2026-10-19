@@ -53,3 +53,16 @@ export const OPENING_SENSOR_STATE = {
   OPEN: 0,
   CLOSE: 1,
 } as const
+
+/**
+ * Pilot wire orders. Note the numbering: COMFORT_1 (3) is "comfort -1 °C" and
+ * COMFORT_2 (4) "comfort -2 °C", so the values do not follow the heat output.
+ */
+export const PILOT_WIRE_MODE = {
+  OFF: 0,
+  FROST_PROTECTION: 1,
+  ECO: 2,
+  COMFORT_1: 3,
+  COMFORT_2: 4,
+  COMFORT: 5,
+} as const

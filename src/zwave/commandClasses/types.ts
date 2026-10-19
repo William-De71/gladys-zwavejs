@@ -132,6 +132,14 @@ export interface CommandClassModule {
    */
   readonly byDeviceClass?: Readonly<Record<string, PropertyMap>>
   /**
+   * Variants selected by the node `deviceId`, checked BEFORE `byDeviceClass`.
+   * For a product whose device class lies about what it does — the Qubino
+   * Flush Pilot announces itself as a dimmer while its levels are pilot wire
+   * orders. Keyed nominatively on purpose: a device class is shared by every
+   * product of its kind, so it can never carry such a rule.
+   */
+  readonly byProduct?: Readonly<Record<string, PropertyMap>>
+  /**
    * Narrows a category from the value metadata (`ccSpecific.sensorType`).
    * Returns a NEW spec — never mutates the template.
    */

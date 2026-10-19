@@ -19,7 +19,7 @@ const COMMAND_CLASS = {
 /** The root endpoint, which on a multi-endpoint device mirrors the real ones. */
 const ROOT_ENDPOINT = 0
 
-/** Devices needing a specific fix, by `<manufacturerId>-<productType>-<productId>`. */
+/** Devices needing a specific fix, by `deviceId`: `<manufacturerId>-<productId>-<productType>`. */
 const PRODUCT_ID = {
   FIBARO_FGMS001: '271-4097-2048',
 } as const

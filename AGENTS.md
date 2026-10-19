@@ -76,16 +76,29 @@ Keys are matched through `clean()`: `Door state (simple)` becomes
 property itself when the key is unknown — which is what lets a single Central
 Scene definition serve every `001`, `002`… scene of a controller:
 
-1. `<deviceClass>.<property>.<propertyKey>`
-2. `<property>.<propertyKey>`
-3. `<deviceClass>.<property>`
-4. `<property>`
+1. `<product>.<property>.<propertyKey>`
+2. `<deviceClass>.<property>.<propertyKey>`
+3. `<property>.<propertyKey>`
+4. `<product>.<property>`
+5. `<deviceClass>.<property>`
+6. `<property>`
 
 ### `byDeviceClass`
 
 Variants selected by `<generic>-<specific>` of the node device class. This is
 the only thing that tells a dimmer from a window covering motor: both speak
 Multilevel Switch, and a value of `0` means OFF for one and STOP for the other.
+
+### `byProduct`
+
+Variants selected by the node `deviceId`, checked before `byDeviceClass`. For
+a product whose device class says the wrong thing: the Qubino Flush Pilot
+announces itself as a dimmer (17-1) while its levels are pilot wire orders.
+Never widen such a rule to the device class — every dimmer shares it.
+
+A product variant must expose a feature **category** no other variant of the
+same command class exposes under that name: `resolveCommand()` does not know
+the node, and finds the variant back through that category alone.
 
 ### `expose`
 
@@ -225,8 +238,9 @@ same physical event.
 
 It currently only **removes** features. This is the file that silently deletes
 things the user would otherwise see, so every rule carries the reason it
-exists, and devices are matched on `deviceId`
-(`<manufacturerId>-<productType>-<productId>`).
+exists, and devices are matched on `deviceId`. Mind its order: zwave-js-ui
+builds it as `<manufacturerId>-<productId>-<productType>`, so a Qubino
+`0x0159 0x0004-0x0051` is `345-81-4`.
 
 Prefer a nominative quirk over a general rule unless the general rule is
 provably safe: the mapping is global, so anything added there applies to every

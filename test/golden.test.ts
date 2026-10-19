@@ -78,6 +78,33 @@ const INTENTIONAL_DEVICE_DIVERGENCES: Array<{
     applies: (device) => device.name === '',
     override: () => ({ name: 'Z‐Stick Gen5 USB Controller' }),
   },
+  {
+    reason:
+      'Node 8 is a Qubino Flush Pilot (ZMNHJD). Its device class says dimmer, so the ' +
+      'internal service exposed a position, an on/off and "restore previous"; its ' +
+      'levels are actually pilot wire orders, which the thermostat can only drive ' +
+      'through a heater/pilot-wire-mode feature. The three dimmer features are ' +
+      'replaced by that one; the temperature sensor is unchanged.',
+    applies: (device) => device.external_id === 'zwavejs-ui:8',
+    override: (device) => ({
+      features: [
+        {
+          category: 'heater',
+          type: 'pilot-wire-mode',
+          min: 0,
+          max: 5,
+          read_only: false,
+          has_feedback: true,
+          keep_history: true,
+          name: '8-38-0-currentValue:pilot_wire_mode',
+          external_id: `ext:${SELECTOR}:8:0:multilevel_switch:currentvalue:pilot_wire_mode`,
+        },
+        ...normalizeFeatures(device).filter(
+          (feature) => !String(feature.external_id).includes(':multilevel_switch:'),
+        ),
+      ],
+    }),
+  },
 ]
 
 const INTENTIONAL_DIVERGENCES: Array<{
@@ -103,33 +130,40 @@ const INTENTIONAL_DIVERGENCES: Array<{
   },
 ]
 
+const rewriteId = (id: string) => id.replace(/^zwavejs-ui:/, `ext:${SELECTOR}:`)
+
 /** Bring a golden device to the shape an external integration publishes. */
 function normalizeGolden(device: GoldenDevice) {
-  const rewrite = (id: string) => id.replace(/^zwavejs-ui:/, `ext:${SELECTOR}:`)
   const deviceOverrides = INTENTIONAL_DEVICE_DIVERGENCES.filter((divergence) =>
     divergence.applies(device),
   ).reduce((accumulator, divergence) => Object.assign(accumulator, divergence.override(device)), {})
 
+  // Applied last, so a device divergence may replace the features too.
   return {
     name: device.name,
-    ...deviceOverrides,
-    external_id: rewrite(device.external_id),
+    external_id: rewriteId(device.external_id),
     params: device.params,
-    features: device.features.map((feature) => {
-      const kept: Record<string, unknown> = {}
-      for (const [key, value] of Object.entries(feature)) {
-        if (!IN_MEMORY_ONLY.has(key)) {
-          kept[key] = key === 'external_id' ? rewrite(value as string) : value
-        }
-      }
-      for (const divergence of INTENTIONAL_DIVERGENCES) {
-        if (divergence.applies(feature)) {
-          Object.assign(kept, divergence.override)
-        }
-      }
-      return kept
-    }),
+    features: normalizeFeatures(device),
+    ...deviceOverrides,
   }
+}
+
+/** The features of a golden device, in the shape an external integration publishes. */
+function normalizeFeatures(device: GoldenDevice): Array<Record<string, unknown>> {
+  return device.features.map((feature) => {
+    const kept: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(feature)) {
+      if (!IN_MEMORY_ONLY.has(key)) {
+        kept[key] = key === 'external_id' ? rewriteId(value as string) : value
+      }
+    }
+    for (const divergence of INTENTIONAL_DIVERGENCES) {
+      if (divergence.applies(feature)) {
+        Object.assign(kept, divergence.override)
+      }
+    }
+    return kept
+  })
 }
 
 test('the mapper reproduces the internal service device by device', () => {

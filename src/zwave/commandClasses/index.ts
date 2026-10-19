@@ -72,26 +72,34 @@ function lookupSelf(
  * The order matters: the most specific match wins, and a value whose property
  * key is unknown falls back to the property itself — which is what lets one
  * Central Scene definition serve every `001`, `002`... scene of a controller.
+ * A product variant comes before a device class one, since a product is the
+ * narrower of the two.
  *
- *   1. `<deviceClass>.<property>.<propertyKey>`
- *   2. `<property>.<propertyKey>`
- *   3. `<deviceClass>.<property>`
- *   4. `<property>`
+ *   1. `<product>.<property>.<propertyKey>`
+ *   2. `<deviceClass>.<property>.<propertyKey>`
+ *   3. `<property>.<propertyKey>`
+ *   4. `<product>.<property>`
+ *   5. `<deviceClass>.<property>`
+ *   6. `<property>`
  */
 export function resolveVariant(
   module: CommandClassModule,
   propertyName: string,
   propertyKeyName: string | null | undefined,
   deviceClass: ZwaveDeviceClass | undefined,
+  deviceId?: string,
 ): PropertyVariant | undefined {
   const property = clean(propertyName)
   const key = clean(propertyKeyName)
   const dcKey = deviceClassKey(deviceClass)
   const dcProperties = dcKey ? module.byDeviceClass?.[dcKey] : undefined
+  const productProperties = deviceId ? module.byProduct?.[deviceId] : undefined
 
   return (
+    lookup(productProperties, property, key) ??
     lookup(dcProperties, property, key) ??
     lookup(module.properties, property, key) ??
+    lookupSelf(productProperties, property) ??
     lookupSelf(dcProperties, property) ??
     lookupSelf(module.properties, property)
   )
@@ -145,6 +153,7 @@ export function resolveCommand(
   }
 
   const propertyMaps: Array<PropertyMap | undefined> = [
+    ...Object.values(module.byProduct ?? {}),
     ...Object.values(module.byDeviceClass ?? {}),
     module.properties,
   ]

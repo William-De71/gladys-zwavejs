@@ -72,20 +72,21 @@ quelque chose.
 Les fonctionnalités sont déduites des command classes Z-Wave exposées par le
 nœud :
 
-| Command class                 | Ce que vous obtenez dans Gladys                              |
-| ----------------------------- | ------------------------------------------------------------ |
-| Binary Switch                 | interrupteur on/off                                          |
-| Multilevel Switch (variateur) | luminosité, on/off, « restaurer l'état précédent »           |
-| Multilevel Switch (volet)     | position du volet, ouvrir/fermer/stop                        |
-| Binary Sensor / Alarm Sensor  | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
-| Notification                  | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
-| Multilevel Sensor             | température, luminosité, puissance                           |
-| Meter                         | énergie, puissance, tension, courant                         |
-| Central Scene                 | appuis de bouton (simple, double, triple, maintenu, relâché) |
-| Battery                       | niveau et indicateur de batterie faible                      |
-| Thermostat Mode               | mode : arrêt, chauffage, climatisation, automatique          |
-| Thermostat Setpoint           | consignes de chauffage, de climatisation et d'économie       |
-| Thermostat Operating State    | état réel : au repos, en chauffe, en refroidissement         |
+| Command class                  | Ce que vous obtenez dans Gladys                              |
+| ------------------------------ | ------------------------------------------------------------ |
+| Binary Switch                  | interrupteur on/off                                          |
+| Multilevel Switch (variateur)  | luminosité, on/off, « restaurer l'état précédent »           |
+| Multilevel Switch (volet)      | position du volet, ouvrir/fermer/stop                        |
+| Multilevel Switch (fil pilote) | ordre fil pilote (Qubino Flush Pilot ZMNHJD)                 |
+| Binary Sensor / Alarm Sensor   | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
+| Notification                   | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
+| Multilevel Sensor              | température, luminosité, puissance                           |
+| Meter                          | énergie, puissance, tension, courant                         |
+| Central Scene                  | appuis de bouton (simple, double, triple, maintenu, relâché) |
+| Battery                        | niveau et indicateur de batterie faible                      |
+| Thermostat Mode                | mode : arrêt, chauffage, climatisation, automatique          |
+| Thermostat Setpoint            | consignes de chauffage, de climatisation et d'économie       |
+| Thermostat Operating State     | état réel : au repos, en chauffe, en refroidissement         |
 
 ### Thermostats
 
@@ -105,6 +106,24 @@ Les modes proposés dans l'interface sont Arrêt, Chauffage, Climatisation et
 Automatique. Z-Wave n'indiquant pas de façon fiable les modes réellement
 supportés par un appareil, un thermostat qui ne sait que chauffer affichera
 quand même Climatisation et Automatique, et les ignorera.
+
+### Radiateurs à fil pilote
+
+Le module **Qubino Flush Pilot (ZMNHJD)** se présente sur le réseau Z-Wave
+comme un variateur, mais chaque plage de niveaux correspond à un ordre fil
+pilote. Gladys le voit donc comme un radiateur avec une seule fonctionnalité
+**fil pilote** : arrêt, hors-gel, éco, confort −2 °C, confort −1 °C, confort.
+C'est celle-ci que vous choisissez comme actionneur dans un thermostat Gladys.
+
+L'ordre affiché est celui que le module confirme, pas celui envoyé : si le
+radiateur rate la commande, Gladys ne fait pas semblant qu'il a obéi. Un appui
+sur les boutons du module est lui aussi répercuté.
+
+Un module déjà ajouté en tant que variateur garde ses anciennes
+fonctionnalités jusqu'à ce que vous le mettiez à jour depuis l'écran de
+découverte. L'historique du variateur n'est pas repris (un niveau en % n'est
+pas un ordre), et les scènes ou widgets qui l'utilisaient sont à re-pointer
+sur la nouvelle fonctionnalité.
 
 Un nœud exposant autre chose apparaît quand même dans la Découverte — seules
 les fonctionnalités ci-dessus sont créées.

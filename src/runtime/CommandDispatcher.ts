@@ -81,9 +81,9 @@ export class CommandDispatcher {
    * Keep the sibling features coherent without waiting for the device to
    * report: setting a dimmer to 0 also turns its virtual on/off state off.
    *
-   * The commanded feature itself is NOT republished — the Gladys core already
-   * saves it, because every writable feature here declares
-   * `has_feedback: false`. Publishing it again would just duplicate the state.
+   * The commanded feature itself is NOT republished. Declared
+   * `has_feedback: false`, the Gladys core already saves it; declared `true`
+   * (the pilot wire), the device report is the only proof it was applied.
    */
   private applySiblingStates(
     parsed: ParsedFeatureId,

@@ -62,6 +62,7 @@ export class DeviceMapper {
         value.propertyName,
         value.propertyKeyName,
         node.deviceClass,
+        node.deviceId,
       )
       if (!variant) {
         continue
@@ -107,6 +108,7 @@ export class DeviceMapper {
       value.propertyName,
       value.propertyKeyName,
       node.deviceClass,
+      node.deviceId,
     )
     if (!variant?.fromZwave) {
       return []
