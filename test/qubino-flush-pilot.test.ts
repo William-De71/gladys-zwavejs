@@ -179,6 +179,17 @@ test('a level outside 0-99 publishes nothing', () => {
   }
 })
 
+test('a node_value_updated report, whose node has no deviceId, is still read as an order', () => {
+  // zwave-js-ui serializes the node of an event without `deviceId` (nor
+  // `values`): a change made from its own UI arrives in that shape.
+  const { deviceId: _deviceId, values: _values, ...eventNode } = node
+  const states = mapper
+    .convertValue(eventNode as ZwaveNode, currentValue(), 20)
+    .map((state) => [state.featureExternalId, state.state])
+
+  assert.deepEqual(states, [[externalId(PILOT_WIRE_ID), PILOT_WIRE_MODE.FROST_PROTECTION]])
+})
+
 test('the snapshot of the fixture reports the eco order', () => {
   const pilotWire = mapper
     .snapshot(node)

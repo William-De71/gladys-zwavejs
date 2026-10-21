@@ -4,6 +4,7 @@ import type { PendingState } from '../runtime/state.ts'
 import type { ZwaveNode, ZwaveValue } from '../types/zwave.ts'
 import { derivedValues, getCommandClass, resolveVariant } from '../zwave/commandClasses/index.ts'
 import type { ExposedFeature, FeatureSpec } from '../zwave/commandClasses/types.ts'
+import { deviceIdOf } from './deviceId.ts'
 import { deviceParams } from './deviceParams.ts'
 import { buildFeatureName } from './featureName.ts'
 import { deviceSuffix, featureSuffix } from './externalId.ts'
@@ -62,7 +63,7 @@ export class DeviceMapper {
         value.propertyName,
         value.propertyKeyName,
         node.deviceClass,
-        node.deviceId,
+        deviceIdOf(node),
       )
       if (!variant) {
         continue
@@ -108,7 +109,7 @@ export class DeviceMapper {
       value.propertyName,
       value.propertyKeyName,
       node.deviceClass,
-      node.deviceId,
+      deviceIdOf(node),
     )
     if (!variant?.fromZwave) {
       return []

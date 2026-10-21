@@ -1,5 +1,6 @@
 import type { ZwaveNode } from '../types/zwave.ts'
 import { clean } from './clean.ts'
+import { deviceIdOf } from './deviceId.ts'
 
 /** A mapped feature plus the Z-Wave provenance the quirks reason about. */
 export interface MappedFeature<T> {
@@ -64,7 +65,7 @@ export function applyQuirks<T>(
   // information without adding anything, and depending on the firmware the
   // motion is reported either as Binary Sensor "General Purpose" or as "Any".
   // When both are present, "General Purpose" is the accurate one.
-  if (node.deviceId === PRODUCT_ID.FIBARO_FGMS001) {
+  if (deviceIdOf(node) === PRODUCT_ID.FIBARO_FGMS001) {
     result = result.filter((f) => f.commandClass !== COMMAND_CLASS.ALARM_SENSOR)
 
     const hasGeneralPurpose = result.some(
