@@ -120,6 +120,8 @@ Si vous l'aviez déjà ajouté comme variateur, acceptez la mise à jour propos�
 dans la Découverte : la luminosité, le on/off et « restaurer l'état précédent »
 laissent place au mode, et leur historique avec eux. La fonctionnalité de
 température ne reçoit de valeurs qu'une fois une sonde branchée sur le module.
+L'entrée filaire du module apparaît comme une **entrée** on/off : sa
+signification dépend de ce que vous y avez branché.
 
 Un nœud exposant autre chose apparaît quand même dans la Découverte — seules
 les fonctionnalités ci-dessus sont créées.

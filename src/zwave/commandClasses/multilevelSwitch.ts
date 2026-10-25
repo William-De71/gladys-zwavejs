@@ -4,6 +4,7 @@ import {
   DEVICE_FEATURE_UNITS,
 } from '@gladysassistant/integration-sdk'
 
+import { forProducts, QUBINO_FLUSH_PILOT } from '../productKey.ts'
 import { COVER_STATE, PILOT_WIRE_MODE, STATE } from '../stateValues.ts'
 import type {
   ActionBuilder,
@@ -256,16 +257,6 @@ const pilotWireProperties: PropertyMap = {
   restoreprevious: { self: { expose: [] } },
 }
 
-/**
- * Qubino Flush Pilot, every version zwave-js knows (`0x0159 0x0004-…`): they
- * share the same configuration and the same level ranges.
- */
-const QUBINO_FLUSH_PILOT = {
-  ZMNHJA: '345-1-4',
-  ZMNHJD: '345-81-4',
-  ZMNHUD: '345-82-4',
-} as const
-
 /** Multilevel Switch (0x26) — dimmers, window covering motors, pilot wires. */
 export const multilevelSwitch: CommandClassModule = {
   id: 38,
@@ -305,9 +296,5 @@ export const multilevelSwitch: CommandClassModule = {
     // Class C Motor: Window Covering Position/Endpoint Aware Device Type
     '17-7': shutterProperties,
   },
-  byProduct: {
-    [QUBINO_FLUSH_PILOT.ZMNHJA]: pilotWireProperties,
-    [QUBINO_FLUSH_PILOT.ZMNHJD]: pilotWireProperties,
-    [QUBINO_FLUSH_PILOT.ZMNHUD]: pilotWireProperties,
-  },
+  byProduct: forProducts(QUBINO_FLUSH_PILOT, pilotWireProperties),
 }

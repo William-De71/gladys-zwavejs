@@ -75,6 +75,28 @@ test('the pilot wire feature is a commandable heater mode, from off to comfort',
   assert.equal(pilotWire.name, '2-38-0-currentValue')
 })
 
+test('the wired input is an input, not a motion sensor', () => {
+  const input = (mapper.toDiscoveredDevice(node).features ?? []).find(
+    (entry) => entry.external_id === externalId('2:0:binary_sensor:any'),
+  )
+  assert.ok(input, 'same external id as before: only the category changes')
+
+  assert.equal(input.category, 'input')
+  assert.equal(input.type, 'binary')
+  assert.equal(input.read_only, true)
+  assert.deepEqual([input.min, input.max], [0, 1])
+})
+
+test('the input state reads as on/off', () => {
+  const any = valueOf(48, 'Any')
+  const stateOf = (raw: unknown) =>
+    mapper.convertValue(node, any, raw).map((state) => [state.featureExternalId, state.state])
+
+  assert.deepEqual(stateOf(true), [[externalId('2:0:binary_sensor:any'), 1]])
+  assert.deepEqual(stateOf(false), [[externalId('2:0:binary_sensor:any'), 0]])
+  assert.deepEqual(stateOf(null), [])
+})
+
 test('every Flush Pilot version is a pilot wire, the DIN rail one and the first one included', () => {
   for (const [productId, model] of [
     [1, 'ZMNHJA'],
@@ -82,6 +104,13 @@ test('every Flush Pilot version is a pilot wire, the DIN rail one and the first 
   ] as const) {
     const other: ZwaveNode = { ...readNode(), productId, deviceId: `345-${productId}-4` }
     assert.ok(featureIds(other).includes('multilevel_switch:currentvalue'), model)
+    assert.equal(
+      mapper
+        .toDiscoveredDevice(other)
+        .features?.find((entry) => entry.external_id.endsWith(':binary_sensor:any'))?.category,
+      'input',
+      model,
+    )
   }
 })
 

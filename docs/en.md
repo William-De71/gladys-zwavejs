@@ -113,7 +113,8 @@ buttons, Z-Wave JS UI — shows the matching mode.
 If you had already added one as a dimmer, accept the update offered in
 Discovery: the brightness, on/off and "restore previous" features give way to
 the mode, and their history goes with them. The temperature feature only
-receives values once a probe is wired to the module.
+receives values once a probe is wired to the module. The module's wired input
+shows as an on/off **input**: what it means depends on what you wired to it.
 
 A node exposing something else still appears in Discovery — only the features
 above are created.
