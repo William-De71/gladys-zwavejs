@@ -108,6 +108,17 @@ test('a battery low flag only publishes on a real boolean', () => {
   assert.deepEqual(convert(sensor, isLow, null), [])
 })
 
+test('a temperature below absolute zero is a sentinel, not a reading', () => {
+  // Node 8 is a Qubino Flush Pilot with no probe wired: it reports -999.9.
+  const module = node(8)
+  const temperature = valueOf(module, 49, 'Air temperature')
+  const feature = `ext:${SELECTOR}:8:0:multilevel_sensor:air_temperature`
+
+  assert.deepEqual(convert(module, temperature, -999.9), [])
+  assert.deepEqual(convert(module, temperature, -273.15), [[feature, -273.15]])
+  assert.deepEqual(convert(module, temperature, -12.5), [[feature, -12.5]])
+})
+
 test('measurements are flagged sampled, buttons are flagged event', () => {
   const sensor = node(4)
   const temperature = mapper.convertValue(sensor, valueOf(sensor, 49, 'Air temperature'), 19.5)
