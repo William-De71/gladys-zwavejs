@@ -18,6 +18,12 @@ function valuesOf(node: ZwaveNode | undefined): Record<string, ZwaveValue> {
  * a value (an endpoint reconfigured, a command class gone). Anything else only
  * ever ADDS: the incoming values win where they exist, the others are kept.
  *
+ * A node WITHOUT a `values` field is a different case altogether: that is how
+ * zwave-js-ui serializes the node of every node event (`zwaveNodeToJSON` —
+ * no values, no `deviceId`, but `ready: true`). It says nothing about the
+ * values, so it only refreshes the fields it carries. Read as authoritative,
+ * a single `node_value_updated` would empty the cached node.
+ *
  * `degraded` says the incoming node was missing values the cache already had,
  * which is the caller's cue to ask for a fresh `getNodes`.
  */
@@ -27,6 +33,19 @@ function reconcile(
 ): { node: ZwaveNode; degraded: boolean } {
   if (!previous) {
     return { node: incoming, degraded: false }
+  }
+
+  if (incoming.values === undefined) {
+    const node: ZwaveNode = { ...previous, ...incoming }
+    if (previous.values !== undefined) {
+      node.values = previous.values
+    }
+    // A node still interviewing may have lost values for real: same cue as a
+    // partial announcement. A ready one is just an event reporting on itself.
+    return {
+      node,
+      degraded: incoming.ready !== true && Object.keys(valuesOf(previous)).length > 0,
+    }
   }
 
   const known = valuesOf(previous)
@@ -105,9 +124,8 @@ export class NodeRegistry {
    * Record a status change (`node_dead`, `node_alive`...) on a cached node.
    * Returns the updated node, or undefined when it is not known.
    *
-   * Never through `upsert`: those events carry the node without its values but
-   * with `ready: true`, which `reconcile` would take as authoritative — a node
-   * going to sleep would come back with no feature at all.
+   * Only the status changes: the event says nothing else the cache should
+   * believe over a `getNodes` answer.
    */
   setStatus(nodeId: number, status: string | number): ZwaveNode | undefined {
     const node = this.nodes.get(nodeId)
