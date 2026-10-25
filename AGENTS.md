@@ -254,6 +254,15 @@ Both methods return a `degraded` boolean saying the incoming node carried less
 than the cache already held, which the runtime turns into a debounced
 `getNodes` resynchronization.
 
+**A node event never carries the values at all.** zwave-js-ui serializes the
+node of every node event with `zwaveNodeToJSON`: the node fields, `ready` and a
+numeric status — no `values` field, no `deviceId`. A node without `values` only
+refreshes the fields it carries; read as a `ready` node that dropped
+everything, one `node_value_updated` would empty the cache. Two consequences
+in the runtime: a value report is converted against the **cached** node, and a
+`node_ready` (or `node_added`, `node_available`) asks for a `getNodes`, since
+that is the only way to learn the values of a freshly included node.
+
 ---
 
 ## Publishing states
