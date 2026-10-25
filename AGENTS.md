@@ -53,6 +53,7 @@ export const example: CommandClassModule = {
   name: 'multilevel_sensor', // cleaned CC name, first key of every lookup
   properties: {/* … */},
   byDeviceClass: {/* … */}, // optional
+  byProduct: {/* … */}, // optional
   refineCategory: (spec, value) => spec, // optional
 }
 ```
@@ -76,16 +77,32 @@ Keys are matched through `clean()`: `Door state (simple)` becomes
 property itself when the key is unknown — which is what lets a single Central
 Scene definition serve every `001`, `002`… scene of a controller:
 
-1. `<deviceClass>.<property>.<propertyKey>`
-2. `<property>.<propertyKey>`
-3. `<deviceClass>.<property>`
-4. `<property>`
+1. `<product>.<property>.<propertyKey>`
+2. `<deviceClass>.<property>.<propertyKey>`
+3. `<property>.<propertyKey>`
+4. `<product>.<property>`
+5. `<deviceClass>.<property>`
+6. `<property>`
 
 ### `byDeviceClass`
 
 Variants selected by `<generic>-<specific>` of the node device class. This is
 the only thing that tells a dimmer from a window covering motor: both speak
 Multilevel Switch, and a value of `0` means OFF for one and STOP for the other.
+
+### `byProduct`
+
+Variants selected by product, for when the device class itself is wrong about
+what the device does — the Qubino Flush Pilot announces a dimmer, while each
+range of its level is a pilot wire order. Keyed by `productKey(node)`:
+`<manufacturerId>-<productId>-<productType>`, the zwave-js-ui `deviceId`
+(product id **before** product type), rebuilt from the three ids when the node
+comes from an event and carries no `deviceId`.
+
+Same rule as the quirks: nominative, one entry per product, and only once
+nothing more general can tell the device apart. A product variant changes the
+external ids of that product's features, so it is a migration — declare it in
+the golden test if the product is in the fixture.
 
 ### `expose`
 
@@ -225,8 +242,8 @@ same physical event.
 
 It currently only **removes** features. This is the file that silently deletes
 things the user would otherwise see, so every rule carries the reason it
-exists, and devices are matched on `deviceId`
-(`<manufacturerId>-<productType>-<productId>`).
+exists, and devices are matched on `productKey(node)`
+(`<manufacturerId>-<productId>-<productType>`).
 
 Prefer a nominative quirk over a general rule unless the general rule is
 provably safe: the mapping is global, so anything added there applies to every

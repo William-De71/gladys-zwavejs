@@ -80,12 +80,7 @@ export class DeviceMapper {
       if (!module) {
         continue
       }
-      const variant = resolveVariant(
-        module,
-        value.propertyName,
-        value.propertyKeyName,
-        node.deviceClass,
-      )
+      const variant = resolveVariant(module, value.propertyName, value.propertyKeyName, node)
       if (!variant) {
         continue
       }
@@ -125,12 +120,7 @@ export class DeviceMapper {
     if (!module) {
       return []
     }
-    const variant = resolveVariant(
-      module,
-      value.propertyName,
-      value.propertyKeyName,
-      node.deviceClass,
-    )
+    const variant = resolveVariant(module, value.propertyName, value.propertyKeyName, node)
     if (!variant?.fromZwave) {
       return []
     }

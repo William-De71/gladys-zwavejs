@@ -72,6 +72,7 @@ Features are derived from the Z-Wave command classes a node exposes:
 | Binary Switch                       | on/off switch                                         |
 | Multilevel Switch (dimmer)          | brightness, on/off, "restore previous"                |
 | Multilevel Switch (window covering) | shutter position, open/close/stop                     |
+| Multilevel Switch (pilot wire)      | heater mode: off, frost protection, eco, comfort…     |
 | Binary Sensor / Alarm Sensor        | motion, smoke, CO, CO₂, leak, opening, temperature    |
 | Notification                        | door/window opening, smoke alarm, CO alarm            |
 | Multilevel Sensor                   | temperature, illuminance, power                       |
@@ -99,6 +100,20 @@ adjustable through its own setpoint.
 The modes offered in the UI are Off, Heat, Cool and Auto. Z-Wave does not
 reliably advertise which modes a device supports, so a heat-only thermostat
 still shows Cool and Auto, and ignores them.
+
+### Pilot wire modules
+
+The **Qubino Flush Pilot** (ZMNHJA, ZMNHJD and its DIN rail version ZMNHUD)
+drives an electric radiator through its pilot wire. On the Z-Wave side it
+pretends to be a dimmer, each range of its level standing for one order; in
+Gladys it is a single **pilot wire mode** feature: off, frost protection, eco,
+comfort -2 °C, comfort -1 °C, comfort. A module set from elsewhere — its own
+buttons, Z-Wave JS UI — shows the matching mode.
+
+If you had already added one as a dimmer, accept the update offered in
+Discovery: the brightness, on/off and "restore previous" features give way to
+the mode, and their history goes with them. The temperature feature only
+receives values once a probe is wired to the module.
 
 A node exposing something else still appears in Discovery — only the features
 above are created.

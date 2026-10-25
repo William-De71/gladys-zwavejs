@@ -59,7 +59,8 @@ is what keeps them from drifting apart.
 Variants selected by the Z-Wave device class live in `byDeviceClass`: a dimmer
 (`17-1`) and a window covering motor (`17-5/6/7`) both speak Multilevel Switch
 but mean entirely different things — including a value of `0`, which is OFF for
-one and STOP for the other.
+one and STOP for the other. When even the device class lies, `byProduct` selects
+a variant by product: a pilot wire module announces itself as a dimmer.
 
 Adding support for a command class is adding one file and one line in
 `commandClasses/index.ts`.

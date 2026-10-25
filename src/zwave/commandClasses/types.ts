@@ -132,6 +132,12 @@ export interface CommandClassModule {
    */
   readonly byDeviceClass?: Readonly<Record<string, PropertyMap>>
   /**
+   * Variants selected by product (`productKey`), for a product whose device
+   * class says nothing of what it does: a pilot wire module announces itself
+   * as a dimmer. Wins over `byDeviceClass`, being the narrower of the two.
+   */
+  readonly byProduct?: Readonly<Record<string, PropertyMap>>
+  /**
    * Narrows a category from the value metadata (`ccSpecific.sensorType`).
    * Returns a NEW spec — never mutates the template.
    */

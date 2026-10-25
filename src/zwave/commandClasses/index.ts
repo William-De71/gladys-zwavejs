@@ -1,5 +1,6 @@
 import type { ZwaveDeviceClass, ZwaveNode, ZwaveValue } from '../../types/zwave.ts'
 import { clean } from '../../mapping/clean.ts'
+import { productKey } from '../productKey.ts'
 import { alarmSensor } from './alarmSensor.ts'
 import { battery, derivedBatteryValues } from './battery.ts'
 import { binarySensor } from './binarySensor.ts'
@@ -72,26 +73,33 @@ function lookupSelf(
  * The order matters: the most specific match wins, and a value whose property
  * key is unknown falls back to the property itself — which is what lets one
  * Central Scene definition serve every `001`, `002`... scene of a controller.
+ * A product is narrower than a device class, so it comes first at each level.
  *
- *   1. `<deviceClass>.<property>.<propertyKey>`
- *   2. `<property>.<propertyKey>`
- *   3. `<deviceClass>.<property>`
- *   4. `<property>`
+ *   1. `<product>.<property>.<propertyKey>`
+ *   2. `<deviceClass>.<property>.<propertyKey>`
+ *   3. `<property>.<propertyKey>`
+ *   4. `<product>.<property>`
+ *   5. `<deviceClass>.<property>`
+ *   6. `<property>`
  */
 export function resolveVariant(
   module: CommandClassModule,
   propertyName: string,
   propertyKeyName: string | null | undefined,
-  deviceClass: ZwaveDeviceClass | undefined,
+  node: ZwaveNode,
 ): PropertyVariant | undefined {
   const property = clean(propertyName)
   const key = clean(propertyKeyName)
-  const dcKey = deviceClassKey(deviceClass)
+  const product = productKey(node)
+  const productProperties = product ? module.byProduct?.[product] : undefined
+  const dcKey = deviceClassKey(node.deviceClass)
   const dcProperties = dcKey ? module.byDeviceClass?.[dcKey] : undefined
 
   return (
+    lookup(productProperties, property, key) ??
     lookup(dcProperties, property, key) ??
     lookup(module.properties, property, key) ??
+    lookupSelf(productProperties, property) ??
     lookupSelf(dcProperties, property) ??
     lookupSelf(module.properties, property)
   )
@@ -145,6 +153,7 @@ export function resolveCommand(
   }
 
   const propertyMaps: Array<PropertyMap | undefined> = [
+    ...Object.values(module.byProduct ?? {}),
     ...Object.values(module.byDeviceClass ?? {}),
     module.properties,
   ]
