@@ -1,6 +1,7 @@
 import type {
   Device,
   DeviceState,
+  DeviceTransportEntry,
   GladysIntegration,
   Logger,
 } from '@gladysassistant/integration-sdk'
@@ -74,6 +75,7 @@ export function createFakeClock(start = 1_000_000) {
 export function createFakeGladys(selector = 'test-selector') {
   const published: DeviceState[] = []
   const discovered: Device[][] = []
+  const transports: DeviceTransportEntry[][] = []
   const gladys = {
     selector,
     devices: [] as Device[],
@@ -84,8 +86,11 @@ export function createFakeGladys(selector = 'test-selector') {
     publishDiscoveredDevices: async (devices: Device[]) => {
       discovered.push(devices)
     },
+    publishTransports: async (entries: DeviceTransportEntry[]) => {
+      transports.push(entries)
+    },
     setConnectionStatus: async () => {},
     getConfig: async () => ({}),
   }
-  return { published, discovered, gladys: gladys as unknown as GladysIntegration }
+  return { published, discovered, transports, gladys: gladys as unknown as GladysIntegration }
 }

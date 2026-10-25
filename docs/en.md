@@ -111,8 +111,11 @@ connected but no node shows up, go back over "Setting up Z-Wave JS UI": **Name**
 must be `zwave-js-ui` and **Prefix** `zwave`, or the integration listens on
 topics nobody publishes to.
 
-**A device stopped updating.** Z-Wave JS UI is the source of truth: check the
-node is alive there first.
+**A device stopped updating.** Look at the badge on its card first. **Unreachable**
+means Z-Wave JS UI declared the node dead, or removed it from the network; an
+**orange dot** means its interview is not finished, so some features may be
+missing until it completes. A sleeping battery device is normal and shows as
+local. Z-Wave JS UI remains the source of truth for the details.
 
 **"State budget exhausted" in the logs.** Gladys accepts 300 states per minute
 per integration. A very chatty network (energy meters reporting every few

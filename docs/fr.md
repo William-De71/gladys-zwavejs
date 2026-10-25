@@ -118,8 +118,12 @@ reprenez la section « Configurer Z-Wave JS UI » : le champ **Name** doit valoi
 `zwave-js-ui` et **Prefix** `zwave`, faute de quoi l'intégration écoute des
 topics que personne n'alimente.
 
-**Un appareil ne se met plus à jour.** Z-Wave JS UI fait référence :
-vérifiez d'abord que le nœud y est bien vivant.
+**Un appareil ne se met plus à jour.** Regardez d'abord le badge sur sa carte.
+**Injoignable** signifie que Z-Wave JS UI a déclaré le nœud mort, ou l'a
+retiré du réseau ; un **point orange** signale une interview inachevée :
+des fonctionnalités peuvent manquer jusqu'à ce qu'elle se termine. Un appareil
+sur pile endormi est normal et apparaît comme local. Z-Wave JS UI reste la
+référence pour le détail.
 
 **« State budget exhausted » dans les logs.** Gladys accepte 300 états par
 minute et par intégration. Un réseau très bavard (compteurs d'énergie

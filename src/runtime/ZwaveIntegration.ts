@@ -21,11 +21,14 @@ import { ZwaveJsUiClient } from '../zwave/ZwaveJsUiClient.ts'
 import { buildTopics, nodeEventName, type Topics } from '../zwave/topics.ts'
 import { CommandDispatcher } from './CommandDispatcher.ts'
 import { StatePublisher } from './StatePublisher.ts'
+import { TransportPublisher } from './TransportPublisher.ts'
 
 /** Node events that make the cached network view stale. */
 const NODE_REFRESH_EVENTS = new Set(['node_ready', 'node_added', 'node_available'])
 const NODE_REMOVED_EVENT = 'node_removed'
 const NODE_VALUE_UPDATED_EVENT = 'node_value_updated'
+/** Node events that only say the node status changed — they feed the transport badge. */
+const NODE_STATUS_EVENTS = new Set(['node_dead', 'node_alive', 'node_sleep', 'node_wakeup'])
 
 /** Coalescing window for discovery publications (node event bursts). */
 const DISCOVERY_DEBOUNCE_MS = 500
@@ -54,6 +57,7 @@ export class ZwaveIntegration {
   private readonly registry = new NodeRegistry()
   private readonly mapper: DeviceMapper
   private readonly states: StatePublisher
+  private readonly transports: TransportPublisher
   private readonly commands: CommandDispatcher
   private readonly client: ZwaveJsUiClient
 
@@ -64,6 +68,7 @@ export class ZwaveIntegration {
    */
   private featuresByDevice = new Map<string, Set<string>>()
   private knownFeatures = new Set<string>()
+  private knownDevices = new Set<string>()
   private discoveryTimer: NodeJS.Timeout | undefined
   private resyncTimer: NodeJS.Timeout | undefined
   /** The network is logged once per start, not on every resynchronization. */
@@ -87,6 +92,12 @@ export class ZwaveIntegration {
       logger: logger.child('states'),
       publish: (batch) => gladys.publishStates(batch),
       knownFeatures: () => this.knownFeatures,
+    })
+
+    this.transports = new TransportPublisher({
+      logger: logger.child('transports'),
+      publish: (entries) => gladys.publishTransports(entries),
+      knownDevices: () => this.knownDevices,
     })
 
     this.commands = new CommandDispatcher({
@@ -119,6 +130,7 @@ export class ZwaveIntegration {
       // A reconnection may have hidden state changes: publish freely again,
       // and revive the publisher that the matching stop() put to sleep.
       this.states.reset()
+      this.transports.reset()
       await this.applyConfig(config, { force: true })
     })
   }
@@ -156,6 +168,7 @@ export class ZwaveIntegration {
       }
       // Drains what is still publishable before the socket goes away.
       await this.states.stop()
+      await this.transports.stop()
       await this.client.close()
     })
   }
@@ -235,6 +248,8 @@ export class ZwaveIntegration {
       this.onNodeRefreshed(parsed as NodeEvent)
     } else if (event === NODE_REMOVED_EVENT) {
       this.onNodeRemoved(parsed as NodeEvent)
+    } else if (event && NODE_STATUS_EVENTS.has(event)) {
+      this.onNodeStatus(parsed as NodeEvent)
     }
   }
 
@@ -256,6 +271,7 @@ export class ZwaveIntegration {
     this.logNetworkOnce()
     await this.publishDiscovered()
     this.publishKnownStates()
+    this.publishTransports(this.registry.all())
   }
 
   /**
@@ -321,6 +337,7 @@ export class ZwaveIntegration {
       this.requestResynchronization(node.id)
     }
     this.states.push(this.mapper.convertValue(node, value, value.newValue))
+    this.publishTransports([this.registry.get(node.id)])
   }
 
   private onNodeRefreshed(message: NodeEvent): void {
@@ -331,6 +348,7 @@ export class ZwaveIntegration {
     if (this.registry.upsert(node)) {
       this.requestResynchronization(node.id)
     }
+    this.publishTransports([this.registry.get(node.id)])
     this.requestDiscoveryPublication()
   }
 
@@ -340,7 +358,18 @@ export class ZwaveIntegration {
       return
     }
     this.registry.remove(node.id)
+    // The Gladys device may outlive its node: say it is gone rather than leave
+    // the badge frozen on whatever the node last reported.
+    this.transports.push([this.mapper.toUnreachable(node.id)])
     this.requestDiscoveryPublication()
+  }
+
+  private onNodeStatus(message: NodeEvent): void {
+    const [node] = message.data ?? []
+    if (typeof node?.id !== 'number' || node.status === undefined) {
+      return
+    }
+    this.publishTransports([this.registry.setStatus(node.id, node.status)])
   }
 
   // -------------------------------------------------------------------------
@@ -372,13 +401,21 @@ export class ZwaveIntegration {
     if (node) {
       this.states.push(this.mapper.snapshot(node))
     }
+    this.publishTransports([node])
   }
 
+  /**
+   * Only what changed goes out — never a forced re-send: the badge is itself
+   * a device param, so if publishing it made Gladys announce an update, a
+   * re-send here would loop.
+   */
   onDeviceUpdated(device: Device): void {
     this.setDeviceFeatures(device)
+    this.publishTransports([this.findNode(device)])
   }
 
   onDeviceDeleted(device: Device): void {
+    this.transports.forget(device.external_id)
     this.featuresByDevice.delete(device.external_id)
     this.rebuildKnownFeatures()
   }
@@ -530,6 +567,16 @@ export class ZwaveIntegration {
     }
   }
 
+  /** Push the badge of each node; the publisher drops what did not change. */
+  private publishTransports(nodes: ReadonlyArray<ZwaveNode | undefined>): void {
+    this.transports.push(
+      nodes.flatMap((node) => {
+        const entry = node && this.mapper.toTransport(node)
+        return entry ? [entry] : []
+      }),
+    )
+  }
+
   private findNode(device: Device): ZwaveNode | undefined {
     const suffix = device.external_id.slice(`ext:${this.gladys.selector}:`.length)
     const nodeId = Number.parseInt(suffix, 10)
@@ -569,6 +616,7 @@ export class ZwaveIntegration {
       }
     }
     this.knownFeatures = all
+    this.knownDevices = new Set(this.featuresByDevice.keys())
   }
 
   private async setStatus(connected: boolean, message?: MultiLanguageMessage): Promise<void> {

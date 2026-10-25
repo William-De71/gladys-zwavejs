@@ -72,7 +72,11 @@ export interface ZwaveNode {
   ready?: boolean
   available?: boolean
   failed?: boolean
-  status?: string
+  /**
+   * `"Alive"`, `"Asleep"`... in `getNodes`; the raw zwave-js `NodeStatus`
+   * number in node events. See `nodeStatus`.
+   */
+  status?: string | number
   values?: Record<string, ZwaveValue>
   [key: string]: unknown
 }

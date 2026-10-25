@@ -101,6 +101,24 @@ export class NodeRegistry {
     return degraded
   }
 
+  /**
+   * Record a status change (`node_dead`, `node_alive`...) on a cached node.
+   * Returns the updated node, or undefined when it is not known.
+   *
+   * Never through `upsert`: those events carry the node without its values but
+   * with `ready: true`, which `reconcile` would take as authoritative — a node
+   * going to sleep would come back with no feature at all.
+   */
+  setStatus(nodeId: number, status: string | number): ZwaveNode | undefined {
+    const node = this.nodes.get(nodeId)
+    if (!node) {
+      return undefined
+    }
+    const updated = { ...node, status }
+    this.nodes.set(nodeId, updated)
+    return updated
+  }
+
   remove(nodeId: number): void {
     this.nodes.delete(nodeId)
   }

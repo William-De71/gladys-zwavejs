@@ -1,4 +1,9 @@
-import type { Device, DeviceFeature } from '@gladysassistant/integration-sdk'
+import {
+  DEVICE_TRANSPORTS,
+  type Device,
+  type DeviceFeature,
+  type DeviceTransportEntry,
+} from '@gladysassistant/integration-sdk'
 
 import type { PendingState } from '../runtime/state.ts'
 import type { ZwaveNode, ZwaveValue } from '../types/zwave.ts'
@@ -8,6 +13,7 @@ import { deviceParams } from './deviceParams.ts'
 import { buildFeatureName } from './featureName.ts'
 import { deviceSuffix, featureSuffix } from './externalId.ts'
 import { applyQuirks, type MappedFeature } from './quirks.ts'
+import { nodeTransport } from './transport.ts'
 
 /**
  * A device name that is never empty.
@@ -45,6 +51,23 @@ export class DeviceMapper {
     return nodes
       .filter((node) => node.virtual !== true)
       .map((node) => this.toDiscoveredDevice(node))
+  }
+
+  /** The transport badge of a node's device, if there is anything to say. */
+  toTransport(node: ZwaveNode): DeviceTransportEntry | undefined {
+    if (node.virtual === true) {
+      return undefined
+    }
+    const transport = nodeTransport(node)
+    return transport && { external_id: this.externalId(deviceSuffix(node.id)), ...transport }
+  }
+
+  /** The badge of a device whose node left the network. */
+  toUnreachable(nodeId: number): DeviceTransportEntry {
+    return {
+      external_id: this.externalId(deviceSuffix(nodeId)),
+      transport: DEVICE_TRANSPORTS.UNREACHABLE,
+    }
   }
 
   toDiscoveredDevice(node: ZwaveNode): Device {

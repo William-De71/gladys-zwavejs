@@ -40,10 +40,12 @@ src/
     externalId.ts               build/parse of the external ids
     featureName.ts              human-readable feature names
     quirks.ts                   per-device fixes, each with its reason
+    transport.ts                node status -> device transport badge
     clean.ts                    name normalization
   runtime/
     ZwaveIntegration.ts         the integration itself
     StatePublisher.ts           dedup, batching, coalescing, budget
+    TransportPublisher.ts       transport badge, changes only
     CommandDispatcher.ts        Gladys command -> MQTT message
 ```
 
