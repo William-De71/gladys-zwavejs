@@ -134,6 +134,17 @@ test('another product of the same device class is still a dimmer', () => {
   )
 })
 
+test('on another product, "Any" is still a motion sensor', () => {
+  const sensor: ZwaveNode = { ...readNode(), productId: 83, deviceId: '345-83-4' }
+
+  assert.equal(
+    mapper
+      .toDiscoveredDevice(sensor)
+      .features?.find((entry) => entry.external_id.endsWith(':binary_sensor:any'))?.category,
+    'motion-sensor',
+  )
+})
+
 // ---------------------------------------------------------------------------
 // Reading
 // ---------------------------------------------------------------------------
