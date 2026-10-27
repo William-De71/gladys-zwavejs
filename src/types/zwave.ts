@@ -60,8 +60,14 @@ export interface ZwaveNode {
   name?: string
   /** User-defined location, mapped to the Gladys `location` device param. */
   loc?: string
-  /** `<manufacturerId>-<productType>-<productId>`, used by the device quirks. */
+  /**
+   * `<manufacturerId>-<productId>-<productType>`, in `getNodes` only. Read it
+   * through `productKey`, which rebuilds it from the three ids below.
+   */
   deviceId?: string
+  manufacturerId?: number
+  productId?: number
+  productType?: number
   /** Readable model description, e.g. `Fibaro Door Window Sensor 2`. */
   productDescription?: string
   /** Model reference, e.g. `FGDW002`. */

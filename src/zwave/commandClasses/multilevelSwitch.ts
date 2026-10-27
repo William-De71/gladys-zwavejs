@@ -4,7 +4,8 @@ import {
   DEVICE_FEATURE_UNITS,
 } from '@gladysassistant/integration-sdk'
 
-import { COVER_STATE, STATE } from '../stateValues.ts'
+import { forProducts, QUBINO_FLUSH_PILOT } from '../productKey.ts'
+import { COVER_STATE, PILOT_WIRE_MODE, STATE } from '../stateValues.ts'
 import type {
   ActionBuilder,
   CommandClassModule,
@@ -180,7 +181,83 @@ const shutterProperties: PropertyMap = {
   currentvalue: { self: shutterCurrentValue },
 }
 
-/** Multilevel Switch (0x26) — dimmers and window covering motors. */
+// ---------------------------------------------------------------------------
+// Pilot wire modules. Their device class says dimmer (17-1), but the level is
+// no brightness: each range of it is one pilot wire order, which the module
+// turns into the signal on the radiator's pilot wire — a radiator "at 30 %" is
+// in eco. Nothing in the protocol says so, hence a variant per product.
+// ---------------------------------------------------------------------------
+
+/**
+ * The order behind a level, read by range: any level of a range selects its
+ * order, so the module may report one we never wrote (its own buttons). Total
+ * over 0-99, the Multilevel Switch range; anything else — 255 is "restore the
+ * last level" — is no order.
+ */
+function pilotWireMode(raw: unknown): number | null {
+  if (typeof raw !== 'number' || raw < 0 || raw > 99) {
+    return null
+  }
+  if (raw <= 10) return PILOT_WIRE_MODE.OFF
+  if (raw <= 20) return PILOT_WIRE_MODE.FROST_PROTECTION
+  if (raw <= 30) return PILOT_WIRE_MODE.ECO
+  if (raw <= 40) return PILOT_WIRE_MODE.COMFORT_2
+  if (raw <= 50) return PILOT_WIRE_MODE.COMFORT_1
+  return PILOT_WIRE_MODE.COMFORT
+}
+
+/**
+ * The level written for each order: the top of its range, 0 for off. Any
+ * level of the range would do; these are the ones the other home automation
+ * systems write to this module, so the ones known to work.
+ */
+const PILOT_WIRE_LEVEL: Readonly<Record<number, number>> = {
+  [PILOT_WIRE_MODE.OFF]: 0,
+  [PILOT_WIRE_MODE.FROST_PROTECTION]: 20,
+  [PILOT_WIRE_MODE.ECO]: 30,
+  [PILOT_WIRE_MODE.COMFORT_2]: 40,
+  [PILOT_WIRE_MODE.COMFORT_1]: 50,
+  [PILOT_WIRE_MODE.COMFORT]: 99,
+}
+
+const pilotWireProperties: PropertyMap = {
+  currentvalue: {
+    self: {
+      expose: [
+        {
+          name: '',
+          // NOT sampled: an order is not a measurement, each one matters.
+          spec: {
+            category: DEVICE_FEATURE_CATEGORIES.HEATER,
+            type: DEVICE_FEATURE_TYPES.HEATER.PILOT_WIRE_MODE,
+            min: PILOT_WIRE_MODE.OFF,
+            max: PILOT_WIRE_MODE.COMFORT,
+            read_only: false,
+            has_feedback: false,
+            keep_history: true,
+          },
+        },
+      ],
+      fromZwave: [{ convert: pilotWireMode }],
+      toZwave: {
+        '': (value) => {
+          const level = PILOT_WIRE_LEVEL[value]
+          // Refused rather than rounded: a guessed order could leave a room
+          // unheated.
+          if (level === undefined) {
+            throw new Error(`Unknown pilot wire order: ${value}`)
+          }
+          return sendCommand('set', [level])
+        },
+      },
+    },
+  },
+  // Neither exposed nor commandable: "restore the previous level" would send
+  // the radiator back to whatever order it had before, which nobody chose.
+  restoreprevious: { self: { expose: [] } },
+}
+
+/** Multilevel Switch (0x26) — dimmers, window covering motors, pilot wires. */
 export const multilevelSwitch: CommandClassModule = {
   id: 38,
   name: 'multilevel_switch',
@@ -219,4 +296,5 @@ export const multilevelSwitch: CommandClassModule = {
     // Class C Motor: Window Covering Position/Endpoint Aware Device Type
     '17-7': shutterProperties,
   },
+  byProduct: forProducts(QUBINO_FLUSH_PILOT, pilotWireProperties),
 }

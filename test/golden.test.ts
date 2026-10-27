@@ -63,11 +63,15 @@ interface GoldenDevice {
  * Deliberate departures from the internal service. Anything not listed here
  * must match it exactly.
  */
-/** Deliberate departures on the device itself. */
+/**
+ * Deliberate departures on the device itself. `override` receives the device
+ * already normalized, and what it returns is applied last — so a divergence
+ * may replace the features too.
+ */
 const INTENTIONAL_DEVICE_DIVERGENCES: Array<{
   reason: string
   applies: (device: GoldenDevice) => boolean
-  override: (device: GoldenDevice) => Record<string, unknown>
+  override: (normalized: NormalizedDevice) => Record<string, unknown>
 }> = [
   {
     reason:
@@ -77,6 +81,34 @@ const INTENTIONAL_DEVICE_DIVERGENCES: Array<{
       'as a fallback (node 1 is the controller stick).',
     applies: (device) => device.name === '',
     override: () => ({ name: 'Z‐Stick Gen5 USB Controller' }),
+  },
+  {
+    reason:
+      'Node 8 is a Qubino Flush Pilot (ZMNHJD). Its device class says dimmer, so the ' +
+      'internal service exposed a position, an on/off and "restore previous" — but ' +
+      'each range of its level is a pilot wire order (30 is eco), which only a ' +
+      'heater/pilot-wire-mode feature lets the user, a scene or the thermostat ' +
+      'drive. The three dimmer features give way to that one; the temperature ' +
+      'sensor is untouched.',
+    applies: (device) => device.external_id === 'zwavejs-ui:8',
+    override: (normalized) => ({
+      features: [
+        {
+          category: 'heater',
+          type: 'pilot-wire-mode',
+          min: 0,
+          max: 5,
+          read_only: false,
+          has_feedback: false,
+          keep_history: true,
+          name: '8-38-0-currentValue',
+          external_id: `ext:${SELECTOR}:8:0:multilevel_switch:currentvalue`,
+        },
+        ...normalized.features.filter(
+          (feature) => !String(feature.external_id).includes(':multilevel_switch:'),
+        ),
+      ],
+    }),
   },
 ]
 
@@ -108,15 +140,28 @@ function rewrite(id: string) {
   return id.replace(/^zwavejs-ui:/, `ext:${SELECTOR}:`)
 }
 
-/** Bring a golden device to the shape an external integration publishes. */
-function normalizeGolden(device: GoldenDevice) {
-  const deviceOverrides = INTENTIONAL_DEVICE_DIVERGENCES.filter((divergence) =>
-    divergence.applies(device),
-  ).reduce((accumulator, divergence) => Object.assign(accumulator, divergence.override(device)), {})
+interface NormalizedDevice {
+  name: string
+  external_id: string
+  params: GoldenDevice['params']
+  features: Array<Record<string, unknown>>
+}
 
+/** Bring a golden device to the shape an external integration publishes. */
+function normalizeGolden(device: GoldenDevice): NormalizedDevice {
+  const normalized = normalizeShape(device)
+  for (const divergence of INTENTIONAL_DEVICE_DIVERGENCES) {
+    if (divergence.applies(device)) {
+      Object.assign(normalized, divergence.override(normalized))
+    }
+  }
+  return normalized
+}
+
+/** The prefix and the in-memory fields, plus the feature-level divergences. */
+function normalizeShape(device: GoldenDevice): NormalizedDevice {
   return {
     name: device.name,
-    ...deviceOverrides,
     external_id: rewrite(device.external_id),
     params: device.params,
     features: device.features.map((feature) => {

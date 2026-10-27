@@ -93,6 +93,56 @@ test('a ready node is authoritative and may drop a value', () => {
   assert.deepEqual(valueIds(registry.get(50)), [(node.values ?? {})[firstKey]!.id])
 })
 
+/**
+ * The node as zwave-js-ui serializes it in every node event (`zwaveNodeToJSON`):
+ * the node fields, `ready` and the numeric status — but neither `values` nor
+ * `deviceId`.
+ */
+const asEventNode = (node: ZwaveNode): ZwaveNode => {
+  const { values: _values, deviceId: _deviceId, ...fields } = node
+  return { ...fields, ready: true, status: 4 }
+}
+
+test('a node event, which never carries the values, does not empty the cached node', () => {
+  const node = findNode(50)
+  const registry = new NodeRegistry()
+  registry.replace([node])
+
+  assert.equal(registry.upsert({ ...asEventNode(node), name: 'renamed' }), false)
+
+  const cached = registry.get(50)
+  assert.deepEqual(valueIds(cached), valueIds(node))
+  assert.equal(cached?.deviceId, node.deviceId, 'the per-product rules key on it')
+  assert.equal(cached?.name, 'renamed', 'the fields the event does carry are refreshed')
+  assert.equal(cached?.status, 4)
+})
+
+test('a node event still interviewing asks for a resynchronization, without losing anything', () => {
+  const node = findNode(50)
+  const registry = new NodeRegistry()
+  registry.replace([node])
+
+  assert.equal(registry.upsert({ ...asEventNode(node), ready: false }), true)
+  assert.deepEqual(valueIds(registry.get(50)), valueIds(node))
+})
+
+test('a value report keeps every device on the Discovery screen whole', () => {
+  // node_value_updated is by far the most frequent event: each one used to
+  // replace the cached node with its value-less event serialization.
+  const nodes = readNodes().filter((node) => node.virtual !== true)
+  const registry = new NodeRegistry()
+  registry.replace(nodes)
+
+  const mapper = new DeviceMapper((suffix) => `ext:test:${suffix}`)
+  const before = mapper.toDiscoveredDevices(registry.all())
+
+  for (const node of nodes) {
+    registry.upsert(asEventNode(node))
+  }
+
+  assert.deepEqual(mapper.toDiscoveredDevices(registry.all()), before)
+})
+
 test('an unknown node is inserted as announced', () => {
   const registry = new NodeRegistry()
   assert.equal(registry.upsert({ id: 7, ready: false }), false)

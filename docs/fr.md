@@ -72,20 +72,21 @@ quelque chose.
 Les fonctionnalités sont déduites des command classes Z-Wave exposées par le
 nœud :
 
-| Command class                 | Ce que vous obtenez dans Gladys                              |
-| ----------------------------- | ------------------------------------------------------------ |
-| Binary Switch                 | interrupteur on/off                                          |
-| Multilevel Switch (variateur) | luminosité, on/off, « restaurer l'état précédent »           |
-| Multilevel Switch (volet)     | position du volet, ouvrir/fermer/stop                        |
-| Binary Sensor / Alarm Sensor  | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
-| Notification                  | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
-| Multilevel Sensor             | température, luminosité, puissance                           |
-| Meter                         | énergie, puissance, tension, courant                         |
-| Central Scene                 | appuis de bouton (simple, double, triple, maintenu, relâché) |
-| Battery                       | niveau et indicateur de batterie faible                      |
-| Thermostat Mode               | mode : arrêt, chauffage, climatisation, automatique          |
-| Thermostat Setpoint           | consignes de chauffage, de climatisation et d'économie       |
-| Thermostat Operating State    | état réel : au repos, en chauffe, en refroidissement         |
+| Command class                  | Ce que vous obtenez dans Gladys                              |
+| ------------------------------ | ------------------------------------------------------------ |
+| Binary Switch                  | interrupteur on/off                                          |
+| Multilevel Switch (variateur)  | luminosité, on/off, « restaurer l'état précédent »           |
+| Multilevel Switch (volet)      | position du volet, ouvrir/fermer/stop                        |
+| Multilevel Switch (fil pilote) | mode de chauffage : arrêt, hors-gel, éco, confort…           |
+| Binary Sensor / Alarm Sensor   | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
+| Notification                   | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
+| Multilevel Sensor              | température, luminosité, puissance                           |
+| Meter                          | énergie, puissance, tension, courant                         |
+| Central Scene                  | appuis de bouton (simple, double, triple, maintenu, relâché) |
+| Battery                        | niveau et indicateur de batterie faible                      |
+| Thermostat Mode                | mode : arrêt, chauffage, climatisation, automatique          |
+| Thermostat Setpoint            | consignes de chauffage, de climatisation et d'économie       |
+| Thermostat Operating State     | état réel : au repos, en chauffe, en refroidissement         |
 
 ### Thermostats
 
@@ -105,6 +106,22 @@ Les modes proposés dans l'interface sont Arrêt, Chauffage, Climatisation et
 Automatique. Z-Wave n'indiquant pas de façon fiable les modes réellement
 supportés par un appareil, un thermostat qui ne sait que chauffer affichera
 quand même Climatisation et Automatique, et les ignorera.
+
+### Modules fil pilote
+
+Le **Qubino Flush Pilot** (ZMNHJA, ZMNHJD et sa version rail DIN ZMNHUD)
+pilote un radiateur électrique par son fil pilote. Côté Z-Wave, il se fait
+passer pour un variateur dont chaque plage de niveau correspond à un ordre ;
+dans Gladys, c'est une seule fonctionnalité **mode fil pilote** : arrêt,
+hors-gel, éco, confort -2 °C, confort -1 °C, confort. Un module réglé
+d'ailleurs — ses propres boutons, Z-Wave JS UI — affiche le mode correspondant.
+
+Si vous l'aviez déjà ajouté comme variateur, acceptez la mise à jour proposée
+dans la Découverte : la luminosité, le on/off et « restaurer l'état précédent »
+laissent place au mode, et leur historique avec eux. La fonctionnalité de
+température ne reçoit de valeurs qu'une fois une sonde branchée sur le module.
+L'entrée filaire du module apparaît comme une **entrée** on/off : sa
+signification dépend de ce que vous y avez branché.
 
 Un nœud exposant autre chose apparaît quand même dans la Découverte — seules
 les fonctionnalités ci-dessus sont créées.

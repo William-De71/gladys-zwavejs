@@ -1,5 +1,6 @@
 import { DEVICE_FEATURE_CATEGORIES, DEVICE_FEATURE_TYPES } from '@gladysassistant/integration-sdk'
 
+import { forProducts, QUBINO_FLUSH_PILOT } from '../productKey.ts'
 import { STATE } from '../stateValues.ts'
 import type { CommandClassModule, FeatureSpec, PropertyNode } from './types.ts'
 
@@ -31,6 +32,33 @@ const binaryProperty: PropertyNode = {
 }
 
 /**
+ * A wired input of a module, whatever is wired to it. The Qubino Flush Pilot
+ * reports one of its inputs as a Binary Sensor of type "Any": a window
+ * contact, a load-shedding signal, a plain switch — the installer decides,
+ * and nothing in the node says which. "Motion", the generic reading of "Any",
+ * would be wrong on a radiator; "input" claims nothing it does not know.
+ */
+const inputProperty: PropertyNode = {
+  self: {
+    expose: [
+      {
+        name: '',
+        spec: {
+          category: DEVICE_FEATURE_CATEGORIES.INPUT,
+          type: DEVICE_FEATURE_TYPES.INPUT.BINARY,
+          min: 0,
+          max: 1,
+          read_only: true,
+          has_feedback: true,
+          keep_history: true,
+        },
+      },
+    ],
+    fromZwave: [{ convert: booleanState }],
+  },
+}
+
+/**
  * `sensorType` values of the Binary Sensor command class that map to a more
  * precise Gladys category than the generic motion sensor.
  */
@@ -57,6 +85,7 @@ export const binarySensor: CommandClassModule = {
     any: binaryProperty,
     general_purpose: binaryProperty,
   },
+  byProduct: forProducts(QUBINO_FLUSH_PILOT, { any: inputProperty }),
   refineCategory: (spec, value) => {
     if (spec.category !== DEVICE_FEATURE_CATEGORIES.MOTION_SENSOR) {
       return spec

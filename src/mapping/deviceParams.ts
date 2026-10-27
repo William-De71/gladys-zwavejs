@@ -1,4 +1,5 @@
 import type { ZwaveNode } from '../types/zwave.ts'
+import { productKey } from '../zwave/productKey.ts'
 import { clean } from './clean.ts'
 
 /** One `{ text, value }` entry of a Z-Wave value metadata `states` list. */
@@ -14,7 +15,7 @@ const CONFIGURATION_CC = 112
 
 /**
  * Configuration (0x70) parameters worth surfacing in the Gladys device
- * "technical parameters" block, by `<manufacturerId>-<productType>-<productId>`.
+ * "technical parameters" block, by `productKey`: `<manufacturerId>-<productId>-<productType>`.
  *
  * This is deliberately nominative: exposing every configuration parameter of
  * every node would bury each device under dozens of static lines. A parameter
@@ -32,7 +33,7 @@ const CONFIG_PARAMS: Readonly<Record<string, readonly number[]>> = {
 
 /** The configuration params surfaced for a node, decoded to their state label. */
 function configParams(node: ZwaveNode): Array<{ name: string; value: string }> {
-  const properties = CONFIG_PARAMS[node.deviceId ?? '']
+  const properties = CONFIG_PARAMS[productKey(node) ?? '']
   if (!properties) {
     return []
   }

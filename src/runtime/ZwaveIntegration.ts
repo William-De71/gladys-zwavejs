@@ -336,8 +336,13 @@ export class ZwaveIntegration {
     if (this.registry.upsert(node)) {
       this.requestResynchronization(node.id)
     }
-    this.states.push(this.mapper.convertValue(node, value, value.newValue))
-    this.publishTransports([this.registry.get(node.id)])
+    // Converted against the cached node, not the one in the event: the event
+    // node has no values and no deviceId, and converters reason on both (the
+    // battery low flag looks for the node's own flag, product variants on the
+    // deviceId).
+    const cached = this.registry.get(node.id) ?? node
+    this.states.push(this.mapper.convertValue(cached, value, value.newValue))
+    this.publishTransports([cached])
   }
 
   private onNodeRefreshed(message: NodeEvent): void {
@@ -345,7 +350,10 @@ export class ZwaveIntegration {
     if (!node) {
       return
     }
-    if (this.registry.upsert(node)) {
+    // The event never carries the values, so a node that just finished its
+    // interview — a fresh inclusion — would stay without features until the
+    // next start. Ask for them.
+    if (this.registry.upsert(node) || node.values === undefined) {
       this.requestResynchronization(node.id)
     }
     this.publishTransports([this.registry.get(node.id)])
@@ -501,8 +509,9 @@ export class ZwaveIntegration {
    *
    * A node event that carries fewer values than we already hold means the
    * announcement was partial — typically a zwave-js-ui restart re-announcing
-   * its nodes before interviewing them. `getNodes` is the source of truth, so
-   * rather than guessing when the network will settle, we ask.
+   * its nodes before interviewing them — and a node announced ready carries
+   * none at all. `getNodes` is the source of truth, so rather than guessing
+   * when the network will settle, we ask.
    *
    * Debounced, and never re-armed while one is pending: a restart announces
    * every node, and one dump answers for all of them.
@@ -512,7 +521,7 @@ export class ZwaveIntegration {
       return
     }
     this.logger.info(
-      `Node ${nodeId} was announced without values it had before; asking zwave-js-ui for a full node list`,
+      `Node ${nodeId} was announced without its values; asking zwave-js-ui for a full node list`,
     )
     this.resyncTimer = setTimeout(() => {
       this.resyncTimer = undefined

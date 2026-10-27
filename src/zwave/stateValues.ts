@@ -48,6 +48,20 @@ export const THERMOSTAT_OPERATING_STATE = {
   COOLING: 2,
 } as const
 
+/**
+ * Pilot wire orders of a heater. The numbering does not follow the heat
+ * output: COMFORT_1 is "comfort -1 °C", COMFORT_2 "comfort -2 °C", so 4 heats
+ * LESS than 3.
+ */
+export const PILOT_WIRE_MODE = {
+  OFF: 0,
+  FROST_PROTECTION: 1,
+  ECO: 2,
+  COMFORT_1: 3,
+  COMFORT_2: 4,
+  COMFORT: 5,
+} as const
+
 /** Opening sensor state — inverted compared to STATE: OPEN is 0. */
 export const OPENING_SENSOR_STATE = {
   OPEN: 0,
