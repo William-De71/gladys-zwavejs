@@ -77,7 +77,7 @@ nœud :
 | Binary Switch                  | interrupteur on/off                                          |
 | Multilevel Switch (variateur)  | luminosité, on/off, « restaurer l'état précédent »           |
 | Multilevel Switch (volet)      | position du volet, ouvrir/fermer/stop                        |
-| Multilevel Switch (fil pilote) | ordre fil pilote (Qubino Flush Pilot ZMNHJD)                 |
+| Multilevel Switch (fil pilote) | variateur + ordre fil pilote (Qubino ZMNHJD)                 |
 | Binary Sensor / Alarm Sensor   | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
 | Notification                   | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
 | Multilevel Sensor              | température, luminosité, puissance                           |
@@ -111,19 +111,20 @@ quand même Climatisation et Automatique, et les ignorera.
 
 Le module **Qubino Flush Pilot (ZMNHJD)** se présente sur le réseau Z-Wave
 comme un variateur, mais chaque plage de niveaux correspond à un ordre fil
-pilote. Gladys le voit donc comme un radiateur avec une seule fonctionnalité
-**fil pilote** : arrêt, hors-gel, éco, confort −2 °C, confort −1 °C, confort.
-C'est celle-ci que vous choisissez comme actionneur dans un thermostat Gladys.
+pilote. Gladys lui ajoute donc une fonctionnalité **fil pilote** : arrêt,
+hors-gel, éco, confort −2 °C, confort −1 °C, confort. C'est celle-ci que vous
+choisissez comme actionneur dans un thermostat Gladys. Les fonctionnalités du
+variateur (luminosité, on/off, « restaurer l'état précédent ») restent
+disponibles pour piloter le niveau brut ; « restaurer l'état précédent »
+renvoie le radiateur à son dernier ordre.
 
 L'ordre affiché est celui que le module confirme, pas celui envoyé : si le
 radiateur rate la commande, Gladys ne fait pas semblant qu'il a obéi. Un appui
 sur les boutons du module est lui aussi répercuté.
 
-Un module déjà ajouté en tant que variateur garde ses anciennes
-fonctionnalités jusqu'à ce que vous le mettiez à jour depuis l'écran de
-découverte. L'historique du variateur n'est pas repris (un niveau en % n'est
-pas un ordre), et les scènes ou widgets qui l'utilisaient sont à re-pointer
-sur la nouvelle fonctionnalité.
+Un module déjà ajouté en tant que variateur gagne la fonctionnalité fil
+pilote quand vous le mettez à jour depuis l'écran de découverte. Ses
+fonctionnalités de variateur gardent leur historique et leurs scènes.
 
 Un nœud exposant autre chose apparaît quand même dans la Découverte — seules
 les fonctionnalités ci-dessus sont créées.

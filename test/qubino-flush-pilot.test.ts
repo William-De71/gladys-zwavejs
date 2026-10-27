@@ -13,14 +13,18 @@ import { createFakeLogger } from './helpers/fakes.ts'
 /**
  * Qubino Flush Pilot (ZMNHJD): a pilot wire module that announces itself as a
  * dimmer (device class 17-1). Each range of Multilevel Switch levels is a
- * pilot wire order, so it is exposed as one heater/pilot-wire-mode feature —
- * the only actuator the Gladys thermostat can drive on such a radiator.
+ * pilot wire order, so a heater/pilot-wire-mode feature — the only actuator
+ * the Gladys thermostat can drive on such a radiator — is exposed next to the
+ * dimmer ones (position, on/off, "restore previous").
  */
 
 const SELECTOR = 'test'
 const externalId = (suffix: string) => `ext:${SELECTOR}:${suffix}`
 const mapper = new DeviceMapper(externalId)
 const PILOT_WIRE_ID = '2:0:multilevel_switch:currentvalue:pilot_wire_mode'
+const POSITION_ID = '2:0:multilevel_switch:currentvalue:position'
+const STATE_ID = '2:0:multilevel_switch:currentvalue:state'
+const RESTORE_PREVIOUS_ID = '2:0:multilevel_switch:restoreprevious'
 
 const node = JSON.parse(
   readFileSync(new URL('./fixtures/qubino-zmnhjdNode.json', import.meta.url), 'utf8'),
@@ -60,18 +64,27 @@ function setup() {
       { external_id: externalId(PILOT_WIRE_ID), category: 'heater', type: 'pilot-wire-mode' },
       value,
     )
-  return { setValue, published, states }
+  const setPosition = (value: number) =>
+    dispatcher.setValue(
+      { external_id: externalId('2') },
+      { external_id: externalId(POSITION_ID), category: 'switch', type: 'dimmer' },
+      value,
+    )
+  return { setValue, setPosition, published, states }
 }
 
 // ---------------------------------------------------------------------------
 // Discovery
 // ---------------------------------------------------------------------------
 
-test('the Flush Pilot exposes a pilot wire feature instead of the dimmer ones', () => {
+test('the Flush Pilot exposes a pilot wire feature next to the dimmer ones', () => {
   assert.deepEqual(
     features().map((feature) => feature.external_id.replace(externalId('2:0:'), '')),
     [
+      'multilevel_switch:currentvalue:position',
+      'multilevel_switch:currentvalue:state',
       'multilevel_switch:currentvalue:pilot_wire_mode',
+      'multilevel_switch:restoreprevious',
       'multilevel_sensor:air_temperature',
       'binary_sensor:any',
     ],
@@ -147,6 +160,19 @@ test('no state is published on send: the module confirms through currentValue', 
   assert.deepEqual(states, [])
 })
 
+test('the dimmer position is still written as a raw level', () => {
+  const { setPosition, published, states } = setup()
+
+  setPosition(30)
+
+  assert.deepEqual(published, [
+    { args: [{ nodeId: 2, commandClass: 38, endpoint: 0 }, 'set', [30]] },
+  ])
+  // The pilot wire order is left to the module report, like on any send.
+  assert.ok(states.every((state) => state.featureExternalId !== externalId(PILOT_WIRE_ID)))
+  assert.ok(states.some((state) => state.featureExternalId === externalId(STATE_ID)))
+})
+
 // ---------------------------------------------------------------------------
 // Device → Gladys
 // ---------------------------------------------------------------------------
@@ -187,7 +213,12 @@ test('a node_value_updated report, whose node has no deviceId, is still read as 
     .convertValue(eventNode as ZwaveNode, currentValue(), 20)
     .map((state) => [state.featureExternalId, state.state])
 
-  assert.deepEqual(states, [[externalId(PILOT_WIRE_ID), PILOT_WIRE_MODE.FROST_PROTECTION]])
+  assert.deepEqual(states, [
+    [externalId(POSITION_ID), 20],
+    [externalId(STATE_ID), 1],
+    [externalId(RESTORE_PREVIOUS_ID), 1],
+    [externalId(PILOT_WIRE_ID), PILOT_WIRE_MODE.FROST_PROTECTION],
+  ])
 })
 
 test('the snapshot of the fixture reports the eco order', () => {

@@ -121,6 +121,27 @@ const restorePreviousProperty: PropertyNode = {
   self: { expose: [], toZwave: { '': restorePreviousAction } },
 }
 
+/** `restorePrevious` exposed as an on/off, on the nodes that are dimmers. */
+const dimmerRestorePreviousProperty: PropertyNode = {
+  self: {
+    expose: [
+      {
+        name: '',
+        spec: {
+          category: DEVICE_FEATURE_CATEGORIES.SWITCH,
+          type: DEVICE_FEATURE_TYPES.SWITCH.BINARY,
+          min: 0,
+          max: 1,
+          read_only: false,
+          has_feedback: false,
+          keep_history: true,
+        },
+      },
+    ],
+    toZwave: { '': restorePreviousAction },
+  },
+}
+
 // ---------------------------------------------------------------------------
 // Window covering motors (device classes 17-5, 17-6, 17-7). Same command
 // class, completely different intent — and a colliding value space: a shutter
@@ -183,8 +204,8 @@ const shutterProperties: PropertyMap = {
 // ---------------------------------------------------------------------------
 // Pilot wire modules. They announce themselves as dimmers (device class 17-1),
 // but each range of levels is a pilot wire order: a "30 %" radiator is in eco.
-// Exposed as one Gladys pilot wire feature, which is what the thermostat and
-// the dashboard know how to drive.
+// Exposed as a Gladys pilot wire feature, which is what the thermostat and the
+// dashboard know how to drive, on top of the dimmer ones.
 // ---------------------------------------------------------------------------
 
 /**
@@ -218,10 +239,21 @@ function pilotWireModeFromLevel(raw: unknown): number | null {
   return PILOT_WIRE_MODE.COMFORT
 }
 
+/**
+ * The dimmer features — "restore previous" included — are kept next to the
+ * order: the raw level stays readable and drivable for whoever wants it, and a
+ * module added as a dimmer keeps its features, history and scenes.
+ *
+ * Their builders MUST stay the default dimmer ones: `resolveCommand()` does not
+ * know the node, so a `switch` command on ANY dimmer may resolve through this
+ * product variant first.
+ */
 const pilotWireProperties: PropertyMap = {
   currentvalue: {
     self: {
       expose: [
+        dimmerPosition,
+        dimmerState,
         {
           name: 'pilot_wire_mode',
           spec: {
@@ -239,8 +271,12 @@ const pilotWireProperties: PropertyMap = {
           },
         },
       ],
-      fromZwave: [{ featureName: 'pilot_wire_mode', convert: pilotWireModeFromLevel }],
+      fromZwave: [
+        ...(dimmerCurrentValue.fromZwave ?? []),
+        { featureName: 'pilot_wire_mode', convert: pilotWireModeFromLevel },
+      ],
       toZwave: {
+        ...dimmerCurrentValue.toZwave,
         pilot_wire_mode: (value) => {
           const level = PILOT_WIRE_LEVEL[value]
           if (level === undefined) {
@@ -251,9 +287,8 @@ const pilotWireProperties: PropertyMap = {
       },
     },
   },
-  // Not exposed, and not commandable: restoring "the previous level" would
-  // send the radiator whatever order it last had, which nobody asked for.
-  restoreprevious: { self: { expose: [] } },
+  // Turning it on sends the radiator back to the order it last had.
+  restoreprevious: dimmerRestorePreviousProperty,
 }
 
 /** Multilevel Switch (0x26) — dimmers, window covering motors, pilot wires. */
@@ -267,27 +302,7 @@ export const multilevelSwitch: CommandClassModule = {
   byDeviceClass: {
     // Dimmers: expose `restorePrevious` explicitly, so the user picks the
     // behavior they want — restore the previous brightness, or plain ON/OFF.
-    '17-1': {
-      restoreprevious: {
-        self: {
-          expose: [
-            {
-              name: '',
-              spec: {
-                category: DEVICE_FEATURE_CATEGORIES.SWITCH,
-                type: DEVICE_FEATURE_TYPES.SWITCH.BINARY,
-                min: 0,
-                max: 1,
-                read_only: false,
-                has_feedback: false,
-                keep_history: true,
-              },
-            },
-          ],
-          toZwave: { '': restorePreviousAction },
-        },
-      },
-    },
+    '17-1': { restoreprevious: dimmerRestorePreviousProperty },
     // Class A Motor: Window Covering No Position/Endpoint Device Type
     '17-5': shutterProperties,
     // Class B Motor: Window Covering Endpoint Aware Device Type

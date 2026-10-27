@@ -98,7 +98,11 @@ Never widen such a rule to the device class — every dimmer shares it.
 
 A product variant must expose a feature **category** no other variant of the
 same command class exposes under that name: `resolveCommand()` does not know
-the node, and finds the variant back through that category alone.
+the node, and finds the variant back through that category alone. The one
+exception is a feature reused as is — the Flush Pilot keeps every dimmer
+feature — whose builders must then be the very same functions
+(spread `dimmerCurrentValue.toZwave`), since any dimmer's command may resolve
+through the product variant.
 
 ### `expose`
 

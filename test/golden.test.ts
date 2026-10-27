@@ -83,11 +83,14 @@ const INTENTIONAL_DEVICE_DIVERGENCES: Array<{
       'Node 8 is a Qubino Flush Pilot (ZMNHJD). Its device class says dimmer, so the ' +
       'internal service exposed a position, an on/off and "restore previous"; its ' +
       'levels are actually pilot wire orders, which the thermostat can only drive ' +
-      'through a heater/pilot-wire-mode feature. The three dimmer features are ' +
-      'replaced by that one; the temperature sensor is unchanged.',
+      'through a heater/pilot-wire-mode feature. That feature is added after the ' +
+      'position and the on/off, the dimmer features themselves are unchanged.',
     applies: (device) => device.external_id === 'zwavejs-ui:8',
     override: (device) => ({
       features: [
+        ...normalizeFeatures(device).filter((feature) =>
+          String(feature.external_id).includes(':multilevel_switch:currentvalue:'),
+        ),
         {
           category: 'heater',
           type: 'pilot-wire-mode',
@@ -100,7 +103,7 @@ const INTENTIONAL_DEVICE_DIVERGENCES: Array<{
           external_id: `ext:${SELECTOR}:8:0:multilevel_switch:currentvalue:pilot_wire_mode`,
         },
         ...normalizeFeatures(device).filter(
-          (feature) => !String(feature.external_id).includes(':multilevel_switch:'),
+          (feature) => !String(feature.external_id).includes(':multilevel_switch:currentvalue:'),
         ),
       ],
     }),

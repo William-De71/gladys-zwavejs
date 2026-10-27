@@ -72,7 +72,7 @@ Features are derived from the Z-Wave command classes a node exposes:
 | Binary Switch                       | on/off switch                                         |
 | Multilevel Switch (dimmer)          | brightness, on/off, "restore previous"                |
 | Multilevel Switch (window covering) | shutter position, open/close/stop                     |
-| Multilevel Switch (pilot wire)      | pilot wire order (Qubino Flush Pilot ZMNHJD)          |
+| Multilevel Switch (pilot wire)      | dimmer + pilot wire order (Qubino ZMNHJD)             |
 | Binary Sensor / Alarm Sensor        | motion, smoke, CO, CO₂, leak, opening, temperature    |
 | Notification                        | door/window opening, smoke alarm, CO alarm            |
 | Multilevel Sensor                   | temperature, illuminance, power                       |
@@ -105,18 +105,19 @@ still shows Cool and Auto, and ignores them.
 
 The **Qubino Flush Pilot (ZMNHJD)** announces itself on the Z-Wave network as
 a dimmer, but each range of levels is a pilot wire order. Gladys therefore
-sees it as a heater with a single **pilot wire** feature: off, frost
-protection, eco, comfort −2 °C, comfort −1 °C, comfort. That is the feature to
-pick as the actuator of a Gladys thermostat.
+adds a **pilot wire** feature: off, frost protection, eco, comfort −2 °C,
+comfort −1 °C, comfort. That is the feature to pick as the actuator of a
+Gladys thermostat. The dimmer features (brightness, on/off, "restore
+previous") stay available to drive the raw level; "restore previous" sends the
+radiator back to its last order.
 
 The order shown is the one the module confirms, not the one sent: if the
 radiator misses the command, Gladys does not pretend it obeyed. Pressing the
 module's own buttons is reflected too.
 
-A module already added as a dimmer keeps its old features until you update it
-from the Discovery screen. The dimmer history is not carried over (a level in
-% is not an order), and the scenes or widgets that used it have to be pointed
-at the new feature.
+A module already added as a dimmer gets the pilot wire feature when you
+update it from the Discovery screen. Its dimmer features keep their history and
+scenes.
 
 A node exposing something else still appears in Discovery — only the features
 above are created.
