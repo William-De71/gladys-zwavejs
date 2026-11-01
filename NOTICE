@@ -1,0 +1,19 @@
+Gladys Z-Wave JS UI integration
+Copyright 2026 Stéphane Escandell (sescandell/gladys-zwavejs, the original work)
+Copyright 2026 William Deren (this fork)
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+It is a fork of https://github.com/sescandell/gladys-zwavejs, modified by
+William Deren: colour lights, door locks, sirens, garage doors, thermostat
+fans, the "Z-Wave network" widget, scene triggers and actions, release
+pipeline.
+
+It talks to Z-Wave JS UI (https://github.com/zwave-js/zwave-js-ui, MIT
+License) through an MQTT broker. The cover shows the Z-Wave JS logo
+(https://github.com/zwave-js/zwave-js, MIT License), used only to name the
+software this unofficial integration connects to.
+
+The test fixtures colorBulbNode, doorLockNode, sirenNode, garageDoorNode and
+fanThermostatNode are converted from the zwave_js test fixtures of Home
+Assistant (https://github.com/home-assistant/core, Apache License 2.0).

@@ -1,38 +1,49 @@
 # -----------------------------------------------------------------------------
-# Continuous integration: runs on every push and every pull request.
+# Continuous integration: every pull request, and the quality gate of the
+# Release workflow (workflow_call) on every push to master. No `push` trigger of
+# its own on master: release.yml runs it there, so a release is never cut from a
+# commit whose checks failed.
 #
-# Four gates:
-#   1. tsc --noEmit -> type check (the ONLY thing tsc does here: Node runs the
-#      .ts sources directly, so a type error is the last line of defense before
-#      a crash inside the container);
-#   2. oxlint       -> catch real mistakes (undefined vars, dead code, ...);
-#   3. oxfmt        -> consistent formatting (no style debates in reviews);
-#   4. node --test  -> the built-in runner, including the golden test that
-#      asserts the mapping stays identical to the internal Gladys service.
-#
-# Runs on Node 26, the version the Docker image ships with (see the Dockerfile),
-# so the check exercises the exact runtime the integration runs on.
+#   1. tsc (type check only: Node runs the .ts sources directly, so a type error
+#      is the last line of defense before a crash inside the container), oxlint,
+#      oxfmt and the tests — the golden test included, which asserts the mapping
+#      stays identical to the internal Gladys service. On Node 26, the version
+#      `engines` requires and the image ships with;
+#   2. the store admission checks, without the image check (the image of a
+#      version only exists once it is released). The integration is never in
+#      the store, but Gladys runs the same checks when it installs it from the
+#      URL of the repository;
+#   3. the Docker image, built for amd64 and never pushed, then started like
+#      Gladys runs it: a broken Dockerfile or a module that does not load
+#      shows up here rather than in a release.
 # -----------------------------------------------------------------------------
 name: CI
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+# Checks only read the code: no write scope for the token.
+permissions:
+  contents: read
 
 jobs:
   quality:
     runs-on: ubuntu-latest
-    name: Lint & test
+    name: Type check, lint & test (Node 26)
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 26
+          # Never the runner's cached Node: it can predate a security release.
+          check-latest: true
           cache: npm
 
       - name: Install dependencies
@@ -49,3 +60,68 @@ jobs:
 
       - name: Run tests
         run: npm test
+
+  store:
+    runs-on: ubuntu-latest
+    name: Store admission checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 26
+          # Never the runner's cached Node: it can predate a security release.
+          check-latest: true
+
+      - name: Validate the manifest, the cover and the docs
+        run: npx --yes github:GladysAssistant/integration-store . --skip-image-check
+
+  docker:
+    runs-on: ubuntu-latest
+    name: Docker build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # Same build as build.yml, without pushing, and for amd64 only: emulating
+      # arm64 is slow, and only the release build needs it.
+      - name: Build (no push)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: gladys-zwavejs:ci
+
+      # The image as Gladys runs it (read-only, unprivileged, 256 MB, no
+      # network): every module loads from the TypeScript sources, a node maps
+      # to a device, and the network widget is valid.
+      - name: Smoke test of the image
+        run: |
+          set -euo pipefail
+          docker run --rm --read-only --memory 256m --network none --user node \
+            --tmpfs /data:uid=1000,gid=1000 --entrypoint node gladys-zwavejs:ci \
+            --input-type=module -e "
+              const { ZwaveIntegration } = await import('/app/src/runtime/ZwaveIntegration.ts');
+              const { DeviceMapper } = await import('/app/src/mapping/DeviceMapper.ts');
+              const { buildNetworkWidget } = await import('/app/src/runtime/networkHealth.ts');
+              const { validateWidgetContent } = await import('@gladysassistant/integration-sdk');
+              const value = { id: '7-37-0-currentValue', nodeId: 7, commandClass: 37, commandClassName: 'Binary Switch', endpoint: 0, property: 'currentValue', propertyName: 'currentValue', value: true };
+              const node = { id: 7, name: 'Plug', ready: true, status: 'Alive', deviceClass: { basic: 4, generic: 16, specific: 1 }, values: { '37-0-currentValue': value } };
+              const device = new DeviceMapper((suffix) => 'ext:x:' + suffix).toDiscoveredDevice(node);
+              const widget = buildNetworkWidget([node], { language: 'fr' });
+              if (typeof ZwaveIntegration !== 'function' || device.features.length !== 1 || validateWidgetContent(widget).length > 0) {
+                process.exit(1);
+              }
+              console.log('modules load, a node maps to a device, the network widget is valid');
+            "
