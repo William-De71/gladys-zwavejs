@@ -8,6 +8,10 @@ each release from the Conventional Commits: do not edit it by hand.
 Versions up to 1.8.0 were released upstream, by
 [sescandell/gladys-zwavejs](https://github.com/sescandell/gladys-zwavejs/releases).
 
+## [1.9.0] - 2026-11-01
+
+- Maintenance release.
+
 ## [1.8.0] - 2026-11-01
 
 ### Added
@@ -24,4 +28,5 @@ Versions up to 1.8.0 were released upstream, by
 - **multilevel-sensor:** a temperature below absolute zero is not published ([2465a8d](https://github.com/William-De71/gladys-zwavejs/commit/2465a8da08b3dbba584e950a4aa760b3cf8f82a6))
 - **registry:** a node event no longer empties the cached node ([c411cbe](https://github.com/William-De71/gladys-zwavejs/commit/c411cbe8e3f816786a0343f08a17573707dc04cb))
 
+[1.9.0]: https://github.com/William-De71/gladys-zwavejs/compare/v1.8.0...v1.9.0
 [1.8.0]: https://github.com/William-De71/gladys-zwavejs/releases/tag/v1.8.0
