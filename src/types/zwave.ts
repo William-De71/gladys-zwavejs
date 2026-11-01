@@ -84,6 +84,10 @@ export interface ZwaveNode {
    */
   status?: string | number
   values?: Record<string, ZwaveValue>
+  /** The controller itself: always there, never a device of its own. */
+  isControllerNode?: boolean
+  /** Last time the node was heard from, in epoch milliseconds (`getNodes` only). */
+  lastActive?: number
   [key: string]: unknown
 }
 

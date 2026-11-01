@@ -4,9 +4,10 @@ Control your Z-Wave network from Gladys, through [Z-Wave JS UI](https://zwave-js
 and an MQTT broker.
 
 This integration does **not** talk to your Z-Wave stick directly. Z-Wave JS UI
-owns the radio and the network management (inclusion, exclusion, healing,
-firmware updates); this integration turns the nodes it publishes into Gladys
-devices, and Gladys commands into Z-Wave commands.
+owns the radio and the network management; this integration turns the nodes it
+publishes into Gladys devices, and Gladys commands into Z-Wave commands. It
+also relays a few network operations to it (inclusion, exclusion, route
+rebuild) from the scenes and the "Z-Wave network" widget.
 
 ## What you need
 
@@ -67,21 +68,26 @@ is not blank while waiting for a battery sensor to wake up.
 
 Features are derived from the Z-Wave command classes a node exposes:
 
-| Command class                       | What you get in Gladys                                |
-| ----------------------------------- | ----------------------------------------------------- |
-| Binary Switch                       | on/off switch                                         |
-| Multilevel Switch (dimmer)          | brightness, on/off, "restore previous"                |
-| Multilevel Switch (window covering) | shutter position, open/close/stop                     |
-| Multilevel Switch (pilot wire)      | heater mode: off, frost protection, eco, comfort…     |
-| Binary Sensor / Alarm Sensor        | motion, smoke, CO, CO₂, leak, opening, temperature    |
-| Notification                        | door/window opening, smoke alarm, CO alarm            |
-| Multilevel Sensor                   | temperature, illuminance, power                       |
-| Meter                               | energy, power, voltage, current                       |
-| Central Scene                       | button clicks (single, double, triple, hold, release) |
-| Battery                             | level and low-battery flag                            |
-| Thermostat Mode                     | mode: off, heat, cool, auto                           |
-| Thermostat Setpoint                 | heating, cooling and energy-save setpoints            |
-| Thermostat Operating State          | what it is really doing: idle, heating, cooling       |
+| Command class                       | What you get in Gladys                                  |
+| ----------------------------------- | ------------------------------------------------------- |
+| Binary Switch                       | on/off switch                                           |
+| Multilevel Switch (dimmer)          | brightness, on/off, "restore previous"                  |
+| Multilevel Switch (window covering) | shutter position, open/close/stop                       |
+| Multilevel Switch (pilot wire)      | heater mode: off, frost protection, eco, comfort…       |
+| Binary Sensor / Alarm Sensor        | motion, smoke, CO, CO₂, leak, opening, temperature      |
+| Notification                        | door/window opening, smoke alarm, CO alarm              |
+| Multilevel Sensor                   | temperature, illuminance, power                         |
+| Meter                               | energy, power, voltage, current                         |
+| Central Scene                       | button clicks (single, double, triple, hold, release)   |
+| Battery                             | level and low-battery flag                              |
+| Thermostat Mode                     | mode: off, heat, cool, auto                             |
+| Thermostat Setpoint                 | heating, cooling and energy-save setpoints              |
+| Thermostat Operating State          | what it is really doing: idle, heating, cooling         |
+| Thermostat Fan Mode                 | fan speed: auto, low, medium, high, quiet               |
+| Color Switch                        | RGB colour of a bulb or an LED strip                    |
+| Door Lock                           | lock: locked / unlocked                                 |
+| Sound Switch                        | siren on/off (plays the default tone), one per endpoint |
+| Barrier Operator                    | garage door or gate: open/close + opening sensor        |
 
 ### Thermostats
 
@@ -116,8 +122,71 @@ the mode, and their history goes with them. The temperature feature only
 receives values once a probe is wired to the module. The module's wired input
 shows as an on/off **input**: what it means depends on what you wired to it.
 
+### Colour lights, locks, sirens, garage doors
+
+- **Colour**: only the RGB colour is exposed; the brightness stays on the
+  bulb's dimmer. The warm / cold white channels are not mapped.
+- **Lock**: only the "secured" mode counts as locked. The modes where a handle
+  still opens the door (inside or outside unsecured, with or without timeout)
+  show as **unlocked**.
+- **Siren**: "on" plays the endpoint's default tone, set in the device
+  configuration (the `defaultToneId` parameter in Z-Wave JS UI).
+- **Garage door / gate**: open and close work, **stop is refused** (the
+  Barrier Operator command class has no stop order). The opening sensor reads
+  "open" as soon as the door is not fully closed, even stopped halfway.
+- **Thermostat fan**: the three Z-Wave "auto" modes show as Auto; Auto is
+  written back as "auto low", the one mode every fan thermostat supports.
+  Modes with no equivalent (circulation…) show nothing.
+
 A node exposing something else still appears in Discovery — only the features
 above are created.
+
+## Z-Wave network: widget and scenes
+
+Requires Gladys 5.3 or later.
+
+### "Z-Wave network" widget
+
+Add it from the dashboard. It shows how many nodes there are, those **not
+responding**, the **low batteries** and the sleeping nodes, then the list of
+what needs attention (how long a node has been silent, battery level,
+incomplete interview). Two buttons:
+
+- **Refresh** asks Z-Wave JS UI for the node list again;
+- **Rebuild routes** starts a route rebuild of the whole network (after a
+  confirmation). It can take long on a large network, and keeps the radio busy
+  meanwhile.
+
+### Scene triggers
+
+| Trigger                        | When                                      |
+| ------------------------------ | ----------------------------------------- |
+| A Z-Wave node stops responding | Z-Wave JS UI marks the node as dead       |
+| A Z-Wave node responds again   | a dead node is reachable again            |
+| A Z-Wave node is added         | a device was just included in the network |
+
+The first two can be limited to one device; all of them provide the "Node id"
+and "Node name" variables, to use in a notification for instance.
+
+### Scene actions
+
+| Action                            | Effect                                                     |
+| --------------------------------- | ---------------------------------------------------------- |
+| Ping a Z-Wave node                | checks the node answers (output: "Node answered")          |
+| Refresh the values of a node      | asks the node for all its values again                     |
+| Rebuild the routes of a node      | repairs how one node reaches the controller                |
+| Rebuild the routes of the network | starts a repair of the whole network                       |
+| Set a configuration parameter     | writes a parameter from the device manual (number + value) |
+| Start a Z-Wave inclusion          | puts the controller in inclusion mode                      |
+| Start a Z-Wave exclusion          | puts the controller in exclusion mode                      |
+| Stop the inclusion or exclusion   | leaves both modes                                          |
+
+A **battery** node only gets a request at its next wake-up, sometimes hours
+later. The action does not fail then: its "Completed" output is false, and the
+request stays queued in Z-Wave JS UI until the node wakes up.
+
+A **secure S2** inclusion asks for the device PIN: keep the Z-Wave JS UI page
+open to type it, or pick "Insecure".
 
 ## Troubleshooting
 

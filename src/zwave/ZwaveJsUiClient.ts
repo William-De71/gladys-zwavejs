@@ -135,16 +135,18 @@ export class ZwaveJsUiClient {
     }
   }
 
-  publish(topic: string, payload: string): void {
+  /** Returns false when the message was dropped because the broker is down. */
+  publish(topic: string, payload: string): boolean {
     const client = this.client
     if (!client?.connected) {
       this.options.logger.warn(`Dropping a message on ${topic}: the broker is not connected`)
-      return
+      return false
     }
     client.publish(topic, payload, (error) => {
       if (error) {
         this.options.logger.warn(`Failed to publish on ${topic}: ${error.message}`)
       }
     })
+    return true
   }
 }

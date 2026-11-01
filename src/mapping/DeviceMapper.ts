@@ -24,7 +24,7 @@ import { nodeTransport } from './transport.ts'
  * empty. The model description is the best readable fallback; the node id is
  * the last resort, and always exists.
  */
-function buildDeviceName(node: ZwaveNode): string {
+export function buildDeviceName(node: ZwaveNode): string {
   for (const candidate of [node.name, node.productDescription, node.productLabel]) {
     if (typeof candidate === 'string' && candidate.trim() !== '') {
       return candidate.trim()

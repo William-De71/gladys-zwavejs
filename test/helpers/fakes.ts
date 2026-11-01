@@ -76,6 +76,8 @@ export function createFakeGladys(selector = 'test-selector') {
   const published: DeviceState[] = []
   const discovered: Device[][] = []
   const transports: DeviceTransportEntry[][] = []
+  const sceneEvents: Array<{ key: string; data: Record<string, unknown> }> = []
+  const widgetRefreshes: string[] = []
   const gladys = {
     selector,
     devices: [] as Device[],
@@ -89,8 +91,22 @@ export function createFakeGladys(selector = 'test-selector') {
     publishTransports: async (entries: DeviceTransportEntry[]) => {
       transports.push(entries)
     },
+    publishSceneEvent: async (key: string, data: Record<string, unknown> = {}) => {
+      sceneEvents.push({ key, data })
+      return { success: true }
+    },
+    requestWidgetRefresh: (key: string) => {
+      widgetRefreshes.push(key)
+    },
     setConnectionStatus: async () => {},
     getConfig: async () => ({}),
   }
-  return { published, discovered, transports, gladys: gladys as unknown as GladysIntegration }
+  return {
+    published,
+    discovered,
+    transports,
+    sceneEvents,
+    widgetRefreshes,
+    gladys: gladys as unknown as GladysIntegration,
+  }
 }

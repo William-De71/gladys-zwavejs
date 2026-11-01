@@ -8,8 +8,23 @@
   },
   "version": "1.8.0",
   "docker_image": "ghcr.io/sescandell/gladys-zwavejs:1.8.0",
-  "gladys_version": ">=4.85.0",
-  "cover_image": "https://raw.githubusercontent.com/Sescandell/gladys-zwavejs/master/cover.png",
+  "gladys_version": ">=5.3.0",
+  "cover_image": "https://raw.githubusercontent.com/William-De71/gladys-zwavejs/master/cover.jpg",
+  "categories": [
+    "protocols"
+  ],
+  "keywords": [
+    "Z-Wave",
+    "Z-Wave JS",
+    "zwavejs2mqtt",
+    "Z-Wave Plus",
+    "Z-Wave Long Range",
+    "MQTT",
+    "Aeotec",
+    "Fibaro",
+    "Qubino",
+    "Zooz"
+  ],
   "transports": [
     "local"
   ],
@@ -55,14 +70,14 @@
       },
       "links": [
         {
-          "url": "https://raw.githubusercontent.com/Sescandell/gladys-zwavejs/master/docs/images/zwavejs-ui-mqtt-configuration.jpg",
+          "url": "https://raw.githubusercontent.com/William-De71/gladys-zwavejs/master/docs/images/zwavejs-ui-mqtt-configuration.jpg",
           "label": {
             "en": "Screenshot: MQTT section",
             "fr": "Capture : section MQTT"
           }
         },
         {
-          "url": "https://raw.githubusercontent.com/Sescandell/gladys-zwavejs/master/docs/images/zwavejs-ui-gateway-configuration.jpg",
+          "url": "https://raw.githubusercontent.com/William-De71/gladys-zwavejs/master/docs/images/zwavejs-ui-gateway-configuration.jpg",
           "label": {
             "en": "Screenshot: Gateway section",
             "fr": "Capture : section Gateway"
@@ -132,6 +147,517 @@
         "en": "Write to the journal the devices and features this integration builds from the Z-Wave network — what Gladys is sent.",
         "fr": "Écrit dans le journal les appareils et fonctionnalités que l'intégration construit à partir du réseau Z-Wave — ce qui est envoyé à Gladys."
       }
+    }
+  ],
+  "scene_triggers": [
+    {
+      "key": "node_dead",
+      "label": {
+        "en": "A Z-Wave node stops responding",
+        "fr": "Un nœud Z-Wave ne répond plus",
+        "de": "Ein Z-Wave-Knoten antwortet nicht mehr",
+        "es": "Un nodo Z-Wave deja de responder"
+      },
+      "description": {
+        "en": "Z-Wave JS UI marked the node as dead.",
+        "fr": "Z-Wave JS UI a déclaré le nœud mort.",
+        "de": "Z-Wave JS UI hat den Knoten als tot markiert.",
+        "es": "Z-Wave JS UI ha marcado el nodo como muerto."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Z-Wave device (any if empty)",
+            "fr": "Appareil Z-Wave (tous si vide)",
+            "de": "Z-Wave-Gerät (alle, wenn leer)",
+            "es": "Dispositivo Z-Wave (todos si vacío)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "node_id",
+          "type": "number",
+          "label": {
+            "en": "Node id",
+            "fr": "Numéro du nœud",
+            "de": "Knoten-ID",
+            "es": "ID del nodo"
+          }
+        },
+        {
+          "key": "node_name",
+          "type": "string",
+          "label": {
+            "en": "Node name",
+            "fr": "Nom du nœud",
+            "de": "Knotenname",
+            "es": "Nombre del nodo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "node_alive",
+      "label": {
+        "en": "A Z-Wave node responds again",
+        "fr": "Un nœud Z-Wave répond de nouveau",
+        "de": "Ein Z-Wave-Knoten antwortet wieder",
+        "es": "Un nodo Z-Wave vuelve a responder"
+      },
+      "description": {
+        "en": "A node that was dead is reachable again.",
+        "fr": "Un nœud déclaré mort est de nouveau joignable.",
+        "de": "Ein toter Knoten ist wieder erreichbar.",
+        "es": "Un nodo muerto vuelve a estar accesible."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Z-Wave device (any if empty)",
+            "fr": "Appareil Z-Wave (tous si vide)",
+            "de": "Z-Wave-Gerät (alle, wenn leer)",
+            "es": "Dispositivo Z-Wave (todos si vacío)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "node_id",
+          "type": "number",
+          "label": {
+            "en": "Node id",
+            "fr": "Numéro du nœud",
+            "de": "Knoten-ID",
+            "es": "ID del nodo"
+          }
+        },
+        {
+          "key": "node_name",
+          "type": "string",
+          "label": {
+            "en": "Node name",
+            "fr": "Nom du nœud",
+            "de": "Knotenname",
+            "es": "Nombre del nodo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "node_added",
+      "label": {
+        "en": "A Z-Wave node is added",
+        "fr": "Un nœud Z-Wave est ajouté",
+        "de": "Ein Z-Wave-Knoten wird hinzugefügt",
+        "es": "Se añade un nodo Z-Wave"
+      },
+      "description": {
+        "en": "A device was just included in the network.",
+        "fr": "Un appareil vient d’être inclus dans le réseau.",
+        "de": "Ein Gerät wurde gerade ins Netz aufgenommen.",
+        "es": "Un dispositivo acaba de incluirse en la red."
+      },
+      "variables": [
+        {
+          "key": "node_id",
+          "type": "number",
+          "label": {
+            "en": "Node id",
+            "fr": "Numéro du nœud",
+            "de": "Knoten-ID",
+            "es": "ID del nodo"
+          }
+        },
+        {
+          "key": "node_name",
+          "type": "string",
+          "label": {
+            "en": "Node name",
+            "fr": "Nom du nœud",
+            "de": "Knotenname",
+            "es": "Nombre del nodo"
+          }
+        }
+      ]
+    }
+  ],
+  "scene_actions": [
+    {
+      "key": "ping_node",
+      "label": {
+        "en": "Ping a Z-Wave node",
+        "fr": "Interroger un nœud Z-Wave",
+        "de": "Z-Wave-Knoten anpingen",
+        "es": "Hacer ping a un nodo Z-Wave"
+      },
+      "description": {
+        "en": "Checks that the node answers.",
+        "fr": "Vérifie que le nœud répond.",
+        "de": "Prüft, ob der Knoten antwortet.",
+        "es": "Comprueba que el nodo responde."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Z-Wave device",
+            "fr": "Appareil Z-Wave",
+            "de": "Z-Wave-Gerät",
+            "es": "Dispositivo Z-Wave"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "alive",
+          "type": "boolean",
+          "label": {
+            "en": "Node answered",
+            "fr": "Le nœud a répondu",
+            "de": "Knoten hat geantwortet",
+            "es": "El nodo respondió"
+          }
+        }
+      ]
+    },
+    {
+      "key": "refresh_values",
+      "label": {
+        "en": "Refresh the values of a node",
+        "fr": "Relire les valeurs d’un nœud",
+        "de": "Werte eines Knotens neu lesen",
+        "es": "Releer los valores de un nodo"
+      },
+      "description": {
+        "en": "Asks the node for all its values again.",
+        "fr": "Redemande toutes ses valeurs au nœud.",
+        "de": "Fragt alle Werte des Knotens erneut ab.",
+        "es": "Vuelve a pedir todos sus valores al nodo."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Z-Wave device",
+            "fr": "Appareil Z-Wave",
+            "de": "Z-Wave-Gerät",
+            "es": "Dispositivo Z-Wave"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "completed",
+          "type": "boolean",
+          "label": {
+            "en": "Completed (false: queued until the node wakes up)",
+            "fr": "Terminé (faux : en attente du réveil du nœud)",
+            "de": "Abgeschlossen (falsch: wartet auf das Aufwachen)",
+            "es": "Completado (falso: en espera de que despierte)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "rebuild_node_routes",
+      "label": {
+        "en": "Rebuild the routes of a node",
+        "fr": "Reconstruire les routes d’un nœud",
+        "de": "Routen eines Knotens neu aufbauen",
+        "es": "Reconstruir las rutas de un nodo"
+      },
+      "description": {
+        "en": "Repairs how one node reaches the controller.",
+        "fr": "Répare le chemin d’un nœud vers le contrôleur.",
+        "de": "Repariert den Weg eines Knotens zum Controller.",
+        "es": "Repara el camino de un nodo al controlador."
+      },
+      "timeout_seconds": 120,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Z-Wave device",
+            "fr": "Appareil Z-Wave",
+            "de": "Z-Wave-Gerät",
+            "es": "Dispositivo Z-Wave"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "completed",
+          "type": "boolean",
+          "label": {
+            "en": "Completed (false: queued until the node wakes up)",
+            "fr": "Terminé (faux : en attente du réveil du nœud)",
+            "de": "Abgeschlossen (falsch: wartet auf das Aufwachen)",
+            "es": "Completado (falso: en espera de que despierte)"
+          }
+        },
+        {
+          "key": "success",
+          "type": "boolean",
+          "label": {
+            "en": "Routes rebuilt",
+            "fr": "Routes reconstruites",
+            "de": "Routen neu aufgebaut",
+            "es": "Rutas reconstruidas"
+          }
+        }
+      ]
+    },
+    {
+      "key": "rebuild_network_routes",
+      "label": {
+        "en": "Rebuild the routes of the network",
+        "fr": "Reconstruire les routes du réseau",
+        "de": "Routen des Netzes neu aufbauen",
+        "es": "Reconstruir las rutas de la red"
+      },
+      "description": {
+        "en": "Starts a route rebuild of every node.",
+        "fr": "Lance la reconstruction des routes de tous les nœuds.",
+        "de": "Startet den Neuaufbau aller Routen.",
+        "es": "Inicia la reconstrucción de todas las rutas."
+      },
+      "timeout_seconds": 20,
+      "outputs": [
+        {
+          "key": "started",
+          "type": "boolean",
+          "label": {
+            "en": "Rebuild started",
+            "fr": "Reconstruction lancée",
+            "de": "Neuaufbau gestartet",
+            "es": "Reconstrucción iniciada"
+          }
+        }
+      ]
+    },
+    {
+      "key": "set_config_parameter",
+      "label": {
+        "en": "Set a configuration parameter",
+        "fr": "Régler un paramètre de configuration",
+        "de": "Konfigurationsparameter setzen",
+        "es": "Ajustar un parámetro de configuración"
+      },
+      "description": {
+        "en": "Writes a parameter from the device manual.",
+        "fr": "Écrit un paramètre du manuel de l’appareil.",
+        "de": "Schreibt einen Parameter aus dem Handbuch.",
+        "es": "Escribe un parámetro del manual del dispositivo."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "required": true,
+          "label": {
+            "en": "Z-Wave device",
+            "fr": "Appareil Z-Wave",
+            "de": "Z-Wave-Gerät",
+            "es": "Dispositivo Z-Wave"
+          }
+        },
+        {
+          "key": "parameter",
+          "type": "number",
+          "required": true,
+          "min": 1,
+          "max": 65535,
+          "label": {
+            "en": "Parameter number",
+            "fr": "Numéro du paramètre",
+            "de": "Parameternummer",
+            "es": "Número de parámetro"
+          }
+        },
+        {
+          "key": "value",
+          "type": "number",
+          "required": true,
+          "label": {
+            "en": "Value",
+            "fr": "Valeur",
+            "de": "Wert",
+            "es": "Valor"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "completed",
+          "type": "boolean",
+          "label": {
+            "en": "Completed (false: queued until the node wakes up)",
+            "fr": "Terminé (faux : en attente du réveil du nœud)",
+            "de": "Abgeschlossen (falsch: wartet auf das Aufwachen)",
+            "es": "Completado (falso: en espera de que despierte)"
+          }
+        },
+        {
+          "key": "success",
+          "type": "boolean",
+          "label": {
+            "en": "Value accepted",
+            "fr": "Valeur acceptée",
+            "de": "Wert angenommen",
+            "es": "Valor aceptado"
+          }
+        }
+      ]
+    },
+    {
+      "key": "start_inclusion",
+      "label": {
+        "en": "Start a Z-Wave inclusion",
+        "fr": "Lancer une inclusion Z-Wave",
+        "de": "Z-Wave-Inklusion starten",
+        "es": "Iniciar una inclusión Z-Wave"
+      },
+      "description": {
+        "en": "Puts the controller in inclusion mode.",
+        "fr": "Met le contrôleur en mode inclusion.",
+        "de": "Versetzt den Controller in den Inklusionsmodus.",
+        "es": "Pone el controlador en modo inclusión."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "security",
+          "type": "select",
+          "default": "default",
+          "label": {
+            "en": "Security",
+            "fr": "Sécurité",
+            "de": "Sicherheit",
+            "es": "Seguridad"
+          },
+          "description": {
+            "en": "S2 devices need their PIN typed in Z-Wave JS UI.",
+            "fr": "Les appareils S2 demandent leur code PIN dans Z-Wave JS UI.",
+            "de": "S2-Geräte verlangen ihre PIN in Z-Wave JS UI.",
+            "es": "Los dispositivos S2 piden su PIN en Z-Wave JS UI."
+          },
+          "options": [
+            {
+              "value": "default",
+              "label": {
+                "en": "Default (secure when possible)",
+                "fr": "Par défaut (sécurisée si possible)",
+                "de": "Standard (sicher, wenn möglich)",
+                "es": "Por defecto (segura si es posible)"
+              }
+            },
+            {
+              "value": "insecure",
+              "label": {
+                "en": "Insecure",
+                "fr": "Non sécurisée",
+                "de": "Unsicher",
+                "es": "No segura"
+              }
+            }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "key": "started",
+          "type": "boolean",
+          "label": {
+            "en": "Inclusion started",
+            "fr": "Inclusion lancée",
+            "de": "Inklusion gestartet",
+            "es": "Inclusión iniciada"
+          }
+        }
+      ]
+    },
+    {
+      "key": "start_exclusion",
+      "label": {
+        "en": "Start a Z-Wave exclusion",
+        "fr": "Lancer une exclusion Z-Wave",
+        "de": "Z-Wave-Exklusion starten",
+        "es": "Iniciar una exclusión Z-Wave"
+      },
+      "description": {
+        "en": "Puts the controller in exclusion mode.",
+        "fr": "Met le contrôleur en mode exclusion.",
+        "de": "Versetzt den Controller in den Exklusionsmodus.",
+        "es": "Pone el controlador en modo exclusión."
+      },
+      "timeout_seconds": 20,
+      "outputs": [
+        {
+          "key": "started",
+          "type": "boolean",
+          "label": {
+            "en": "Exclusion started",
+            "fr": "Exclusion lancée",
+            "de": "Exklusion gestartet",
+            "es": "Exclusión iniciada"
+          }
+        }
+      ]
+    },
+    {
+      "key": "stop_inclusion_exclusion",
+      "label": {
+        "en": "Stop the inclusion or exclusion",
+        "fr": "Arrêter l’inclusion ou l’exclusion",
+        "de": "Inklusion oder Exklusion beenden",
+        "es": "Detener la inclusión o exclusión"
+      },
+      "description": {
+        "en": "Leaves inclusion and exclusion mode.",
+        "fr": "Quitte les modes inclusion et exclusion.",
+        "de": "Beendet Inklusions- und Exklusionsmodus.",
+        "es": "Sale de los modos inclusión y exclusión."
+      },
+      "timeout_seconds": 20
+    }
+  ],
+  "widgets": [
+    {
+      "key": "network",
+      "label": {
+        "en": "Z-Wave network",
+        "fr": "Réseau Z-Wave",
+        "de": "Z-Wave-Netz",
+        "es": "Red Z-Wave"
+      },
+      "icon": "share-2",
+      "description": {
+        "en": "Nodes not responding, low batteries, route repair.",
+        "fr": "Nœuds muets, piles faibles, réparation des routes.",
+        "de": "Stumme Knoten, schwache Batterien, Routenreparatur.",
+        "es": "Nodos mudos, pilas bajas, reparación de rutas."
+      },
+      "action_timeout_seconds": 20
     }
   ]
 }

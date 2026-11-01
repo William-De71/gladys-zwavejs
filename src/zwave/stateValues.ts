@@ -67,3 +67,21 @@ export const OPENING_SENSOR_STATE = {
   OPEN: 0,
   CLOSE: 1,
 } as const
+
+/** Lock state of a door lock (`LOCK.STATE` in the core). */
+export const LOCK_STATE = {
+  UNLOCKED: 0,
+  LOCKED: 1,
+} as const
+
+/**
+ * Fan speeds of an air conditioner (`AC_FAN_SPEED` in the core), limited to
+ * the ones a Z-Wave thermostat fan mode maps onto.
+ */
+export const AC_FAN_SPEED = {
+  AUTO: 0,
+  LOW: 1,
+  MID: 3,
+  HIGH: 5,
+  QUIET: 6,
+} as const

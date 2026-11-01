@@ -5,6 +5,15 @@ network into [Gladys Assistant](https://gladysassistant.com), over MQTT.
 
 User documentation: [`docs/en.md`](./docs/en.md) · [`docs/fr.md`](./docs/fr.md)
 
+![Z-Wave JS UI for Gladys Assistant](cover.jpg)
+
+Personal fork of [sescandell/gladys-zwavejs](https://github.com/sescandell/gladys-zwavejs)
+(Apache-2.0), not published on the Gladys store. On top of upstream: colour
+lights, door locks, sirens, garage doors and thermostat fans; a "Z-Wave
+network" dashboard widget; scene triggers (node dead, back online, added) and
+scene actions (ping, refresh, route rebuild, configuration parameter,
+inclusion / exclusion). Requires Gladys 5.3 or later.
+
 Extending the integration: [`AGENTS.md`](./AGENTS.md) — the mechanisms a
 command class module can use, and the rules that must hold.
 

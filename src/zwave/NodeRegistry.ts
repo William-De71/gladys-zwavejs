@@ -137,6 +137,40 @@ export class NodeRegistry {
     return updated
   }
 
+  /**
+   * Record a reported value on the cached node, and that the node was heard
+   * from just now.
+   *
+   * Only a value the cache already knows is updated: a value report says
+   * nothing of the metadata, and inventing a value from it would change what
+   * discovery produces on the strength of an event. Without this, the snapshot
+   * a freshly created device gets — and the network widget — would show the
+   * values of the last `getNodes`, however old.
+   */
+  applyValue(nodeId: number, valueId: string, newValue: unknown, now = Date.now()): void {
+    const node = this.nodes.get(nodeId)
+    if (!node) {
+      return
+    }
+    // Matched on the value `id`, never on its key in `values`: `getNodes`
+    // keys a value `<cc>-<endpoint>-<property>`, without the node id its `id`
+    // and the events carry — and older zwave-js-ui send `values` as an array.
+    const values = node.values
+    const entry = values
+      ? Object.entries(values).find(([key, value]) => value?.id === valueId || key === valueId)
+      : undefined
+    let updated: ZwaveNode['values']
+    if (values && entry) {
+      const copy = (Array.isArray(values) ? [...values] : { ...values }) as Record<
+        string,
+        ZwaveValue
+      >
+      copy[entry[0]] = { ...entry[1], value: newValue }
+      updated = copy
+    }
+    this.nodes.set(nodeId, { ...node, lastActive: now, ...(updated ? { values: updated } : {}) })
+  }
+
   remove(nodeId: number): void {
     this.nodes.delete(nodeId)
   }

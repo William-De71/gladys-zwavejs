@@ -18,9 +18,34 @@ export interface Topics {
   readonly writeValue: string
   /** Root of the node events; the last segment is the event name. */
   readonly nodeEvents: string
+  /** Request topic of any zwave-js-ui API (`pingNode`, `rebuildNodeRoutes`...). */
+  readonly apiRequest: (api: ZwaveApiName) => string
+  /** Topic zwave-js-ui answers an API call on: the request topic without `/set`. */
+  readonly apiResponse: (api: ZwaveApiName) => string
   /** What to subscribe to on every connection. */
   readonly subscriptions: readonly string[]
 }
+
+/**
+ * The zwave-js-ui APIs the integration calls AND awaits the answer of — the
+ * scene actions and the network widget. Listed explicitly: each one is a
+ * subscription, and listening to the whole `api/#` branch would also deliver
+ * the answer of every command written by `sendCommand` and `writeValue`, or by
+ * any other MQTT client of the same broker.
+ */
+export const AWAITED_APIS = [
+  'pingNode',
+  'refreshValues',
+  'rebuildNodeRoutes',
+  'beginRebuildingRoutes',
+  'startInclusion',
+  'stopInclusion',
+  'startExclusion',
+  'stopExclusion',
+  'writeValue',
+] as const
+
+export type ZwaveApiName = (typeof AWAITED_APIS)[number]
 
 export function buildTopics({ prefix, gateway }: TopicSettings): Topics {
   const client = `${prefix}/_CLIENTS/${gateway}`
@@ -33,12 +58,18 @@ export function buildTopics({ prefix, gateway }: TopicSettings): Topics {
     sendCommand: `${client}/api/sendCommand/set`,
     writeValue: `${client}/api/writeValue/set`,
     nodeEvents,
+    apiRequest: (api) => `${client}/api/${api}/set`,
+    apiResponse: (api) => `${client}/api/${api}`,
     // The node event branch is taken as a whole rather than topic by topic:
     // zwave-js-ui publishes several lifecycle events there (node_ready,
     // node_added, node_removed, node_value_updated...) and matching the branch
     // survives that list changing. It stays narrow: only this gateway, only
     // node events — not the value tree, which we never read from MQTT.
-    subscriptions: [getNodesResponse, `${nodeEvents}/#`],
+    subscriptions: [
+      getNodesResponse,
+      `${nodeEvents}/#`,
+      ...AWAITED_APIS.map((api) => `${client}/api/${api}`),
+    ],
   }
 }
 

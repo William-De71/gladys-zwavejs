@@ -11,6 +11,8 @@
  */
 import { GladysIntegration, logger } from '@gladysassistant/integration-sdk'
 
+import { SCENE_ACTIONS } from './src/runtime/NetworkOperations.ts'
+import { NETWORK_WIDGET } from './src/runtime/networkHealth.ts'
 import { ZwaveIntegration } from './src/runtime/ZwaveIntegration.ts'
 
 const gladys = new GladysIntegration()
@@ -26,6 +28,12 @@ gladys.onDeviceUpdated((device) => integration.onDeviceUpdated(device))
 gladys.onDeviceDeleted((device) => integration.onDeviceDeleted(device))
 gladys.onAction('test_connection', () => integration.testConnection())
 gladys.onAction('dump_devices', () => integration.dumpDevices())
+
+for (const key of Object.values(SCENE_ACTIONS)) {
+  gladys.onSceneAction(key, (fields) => integration.runSceneAction(key, fields))
+}
+gladys.onWidgetGet(NETWORK_WIDGET, ({ language }) => integration.networkWidget(language))
+gladys.onWidgetAction(NETWORK_WIDGET, (actionKey) => integration.networkWidgetAction(actionKey))
 
 // Nothing survives a disconnection (the protocol has no queue): the SDK
 // resynchronizes the devices and the configuration, and we redo our own

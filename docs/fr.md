@@ -4,10 +4,11 @@ Pilotez votre réseau Z-Wave depuis Gladys, via
 [Z-Wave JS UI](https://zwave-js.github.io/zwave-js-ui/) et un broker MQTT.
 
 Cette intégration ne parle **pas** directement à votre clé Z-Wave. C'est
-Z-Wave JS UI qui possède la radio et la gestion du réseau (inclusion,
-exclusion, réparation, mises à jour firmware) ; cette intégration transforme
-les nœuds qu'il publie en appareils Gladys, et les commandes Gladys en
-commandes Z-Wave.
+Z-Wave JS UI qui possède la radio et la gestion du réseau ; cette intégration
+transforme les nœuds qu'il publie en appareils Gladys, et les commandes Gladys
+en commandes Z-Wave. Elle lui relaie aussi quelques opérations de réseau
+(inclusion, exclusion, réparation des routes) depuis les scènes et le widget
+« Réseau Z-Wave ».
 
 ## Prérequis
 
@@ -72,21 +73,26 @@ quelque chose.
 Les fonctionnalités sont déduites des command classes Z-Wave exposées par le
 nœud :
 
-| Command class                  | Ce que vous obtenez dans Gladys                              |
-| ------------------------------ | ------------------------------------------------------------ |
-| Binary Switch                  | interrupteur on/off                                          |
-| Multilevel Switch (variateur)  | luminosité, on/off, « restaurer l'état précédent »           |
-| Multilevel Switch (volet)      | position du volet, ouvrir/fermer/stop                        |
-| Multilevel Switch (fil pilote) | mode de chauffage : arrêt, hors-gel, éco, confort…           |
-| Binary Sensor / Alarm Sensor   | mouvement, fumée, CO, CO₂, fuite, ouverture, température     |
-| Notification                   | ouverture de porte/fenêtre, alarme fumée, alarme CO          |
-| Multilevel Sensor              | température, luminosité, puissance                           |
-| Meter                          | énergie, puissance, tension, courant                         |
-| Central Scene                  | appuis de bouton (simple, double, triple, maintenu, relâché) |
-| Battery                        | niveau et indicateur de batterie faible                      |
-| Thermostat Mode                | mode : arrêt, chauffage, climatisation, automatique          |
-| Thermostat Setpoint            | consignes de chauffage, de climatisation et d'économie       |
-| Thermostat Operating State     | état réel : au repos, en chauffe, en refroidissement         |
+| Command class                  | Ce que vous obtenez dans Gladys                                  |
+| ------------------------------ | ---------------------------------------------------------------- |
+| Binary Switch                  | interrupteur on/off                                              |
+| Multilevel Switch (variateur)  | luminosité, on/off, « restaurer l'état précédent »               |
+| Multilevel Switch (volet)      | position du volet, ouvrir/fermer/stop                            |
+| Multilevel Switch (fil pilote) | mode de chauffage : arrêt, hors-gel, éco, confort…               |
+| Binary Sensor / Alarm Sensor   | mouvement, fumée, CO, CO₂, fuite, ouverture, température         |
+| Notification                   | ouverture de porte/fenêtre, alarme fumée, alarme CO              |
+| Multilevel Sensor              | température, luminosité, puissance                               |
+| Meter                          | énergie, puissance, tension, courant                             |
+| Central Scene                  | appuis de bouton (simple, double, triple, maintenu, relâché)     |
+| Battery                        | niveau et indicateur de batterie faible                          |
+| Thermostat Mode                | mode : arrêt, chauffage, climatisation, automatique              |
+| Thermostat Setpoint            | consignes de chauffage, de climatisation et d'économie           |
+| Thermostat Operating State     | état réel : au repos, en chauffe, en refroidissement             |
+| Thermostat Fan Mode            | vitesse de ventilation : auto, basse, moyenne, haute, silence    |
+| Color Switch                   | couleur RGB d'une ampoule ou d'un ruban LED                      |
+| Door Lock                      | serrure : verrouillée / déverrouillée                            |
+| Sound Switch                   | sirène on/off (joue la mélodie par défaut), une par endpoint     |
+| Barrier Operator               | porte de garage ou portail : ouvrir/fermer + capteur d'ouverture |
 
 ### Thermostats
 
@@ -123,8 +129,77 @@ température ne reçoit de valeurs qu'une fois une sonde branchée sur le module
 L'entrée filaire du module apparaît comme une **entrée** on/off : sa
 signification dépend de ce que vous y avez branché.
 
+### Lumières couleur, serrures, sirènes, portes de garage
+
+- **Couleur** : seule la couleur RGB est exposée ; la luminosité reste celle du
+  variateur de l'ampoule. Les canaux blanc chaud / blanc froid ne sont pas
+  repris.
+- **Serrure** : seul le mode « sécurisé » compte comme verrouillé. Les modes
+  où une poignée ouvre encore la porte (intérieur ou extérieur déverrouillé,
+  avec ou sans minuterie) sont affichés **déverrouillés**.
+- **Sirène** : « on » joue la mélodie par défaut de l'endpoint, réglée dans la
+  configuration de l'appareil (paramètre `defaultToneId` dans Z-Wave JS UI).
+- **Porte de garage / portail** : ouvrir et fermer fonctionnent, **stop est
+  refusé** (la command class Barrier Operator n'a pas d'ordre d'arrêt). Le
+  capteur d'ouverture indique « ouvert » dès que la porte n'est pas
+  complètement fermée, même arrêtée à mi-course.
+- **Ventilation d'un thermostat** : les trois modes « auto » de Z-Wave sont
+  affichés Auto ; Auto est renvoyé comme « auto basse », le seul mode que tous
+  les thermostats supportent. Les modes sans équivalent (circulation…)
+  n'affichent rien.
+
 Un nœud exposant autre chose apparaît quand même dans la Découverte — seules
 les fonctionnalités ci-dessus sont créées.
+
+## Réseau Z-Wave : widget et scènes
+
+Nécessite Gladys 5.3 ou plus récent.
+
+### Widget « Réseau Z-Wave »
+
+À ajouter depuis le tableau de bord. Il affiche le nombre de nœuds, ceux qui
+**ne répondent plus**, les **piles faibles** et les nœuds endormis, puis la
+liste de ce qui demande votre attention (nœud muet depuis combien de temps,
+niveau de pile, interview incomplète). Deux boutons :
+
+- **Actualiser** redemande la liste des nœuds à Z-Wave JS UI ;
+- **Réparer les routes** lance la reconstruction des routes de tout le réseau
+  (après confirmation). Elle peut durer longtemps sur un grand réseau, et
+  sollicite fortement la radio pendant ce temps.
+
+### Déclencheurs de scène
+
+| Déclencheur                      | Quand                                          |
+| -------------------------------- | ---------------------------------------------- |
+| Un nœud Z-Wave ne répond plus    | Z-Wave JS UI déclare le nœud mort              |
+| Un nœud Z-Wave répond de nouveau | un nœud déclaré mort redevient joignable       |
+| Un nœud Z-Wave est ajouté        | un appareil vient d'être inclus dans le réseau |
+
+Les deux premiers peuvent être limités à un appareil ; tous fournissent les
+variables « Numéro du nœud » et « Nom du nœud », à utiliser par exemple dans
+une notification.
+
+### Actions de scène
+
+| Action                               | Effet                                                        |
+| ------------------------------------ | ------------------------------------------------------------ |
+| Interroger un nœud Z-Wave            | vérifie que le nœud répond (sortie : « Le nœud a répondu »)  |
+| Relire les valeurs d'un nœud         | redemande toutes ses valeurs au nœud                         |
+| Reconstruire les routes d'un nœud    | répare le chemin d'un nœud vers le contrôleur                |
+| Reconstruire les routes du réseau    | lance la réparation de tout le réseau                        |
+| Régler un paramètre de configuration | écrit un paramètre du manuel de l'appareil (numéro + valeur) |
+| Lancer une inclusion Z-Wave          | met le contrôleur en mode inclusion                          |
+| Lancer une exclusion Z-Wave          | met le contrôleur en mode exclusion                          |
+| Arrêter l'inclusion ou l'exclusion   | quitte les deux modes                                        |
+
+Un nœud **sur pile** ne reçoit une demande qu'à son prochain réveil, parfois
+des heures plus tard. Dans ce cas l'action ne tombe pas en erreur : sa sortie
+« Terminé » vaut faux, et la demande reste en attente dans Z-Wave JS UI
+jusqu'au réveil.
+
+Une inclusion **sécurisée S2** demande de saisir le code PIN de l'appareil :
+gardez la page de Z-Wave JS UI ouverte pour le faire, ou choisissez
+« Non sécurisée ».
 
 ## En cas de problème
 

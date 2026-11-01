@@ -2,14 +2,19 @@ import type { ZwaveDeviceClass, ZwaveNode, ZwaveValue } from '../../types/zwave.
 import { clean } from '../../mapping/clean.ts'
 import { productKey } from '../productKey.ts'
 import { alarmSensor } from './alarmSensor.ts'
+import { barrierOperator } from './barrierOperator.ts'
 import { battery, derivedBatteryValues } from './battery.ts'
 import { binarySensor } from './binarySensor.ts'
 import { binarySwitch } from './binarySwitch.ts'
 import { centralScene } from './centralScene.ts'
+import { colorSwitch } from './colorSwitch.ts'
+import { doorLock } from './doorLock.ts'
 import { meter } from './meter.ts'
 import { multilevelSensor } from './multilevelSensor.ts'
 import { multilevelSwitch } from './multilevelSwitch.ts'
 import { notification } from './notification.ts'
+import { soundSwitch } from './soundSwitch.ts'
+import { thermostatFanMode } from './thermostatFanMode.ts'
 import { thermostatMode } from './thermostatMode.ts'
 import { thermostatOperatingState } from './thermostatOperatingState.ts'
 import { thermostatSetpoint } from './thermostatSetpoint.ts'
@@ -28,6 +33,11 @@ const MODULES: readonly CommandClassModule[] = [
   thermostatMode,
   thermostatOperatingState,
   thermostatSetpoint,
+  thermostatFanMode,
+  colorSwitch,
+  doorLock,
+  soundSwitch,
+  barrierOperator,
 ]
 
 const BY_NAME = new Map(MODULES.map((module) => [module.name, module]))

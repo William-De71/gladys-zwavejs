@@ -18,7 +18,7 @@ const LEVEL_PROPERTY = 'level'
  * batteries need replacing, so both readings agree rather than contradicting
  * each other in the same interface.
  */
-const LOW_BATTERY_PERCENT = 10
+export const LOW_BATTERY_PERCENT = 10
 
 /** Values of a node, whatever shape zwave-js-ui published them in. */
 function valuesOf(node: ZwaveNode): ZwaveValue[] {
@@ -41,6 +41,30 @@ function isBatteryProperty(value: ZwaveValue, property: string): boolean {
  * `isLow` it stays the source of truth, and only when it does not do we derive
  * the flag from the level.
  */
+/**
+ * The battery reading of a node, for the network overview: its lowest level
+ * (a multi-endpoint device may carry one battery per endpoint) and whether it
+ * is low — by the node's own flag where it still has one, by the level
+ * otherwise, exactly like the battery-low feature. `undefined` for a
+ * mains-powered node.
+ */
+export function batteryReading(node: ZwaveNode): { level?: number; low: boolean } | undefined {
+  const battery = valuesOf(node).filter((value) => value.commandClass === BATTERY_COMMAND_CLASS)
+  if (battery.length === 0) {
+    return undefined
+  }
+  const levels = battery
+    .filter((value) => value.propertyName === LEVEL_PROPERTY && typeof value.value === 'number')
+    .map((value) => value.value as number)
+  const level = levels.length > 0 ? Math.min(...levels) : undefined
+  const flags = battery.filter((value) => value.propertyName === IS_LOW_PROPERTY)
+  const low =
+    flags.length > 0
+      ? flags.some((value) => value.value === true)
+      : level !== undefined && level <= LOW_BATTERY_PERCENT
+  return level === undefined ? { low } : { level, low }
+}
+
 export function reportsIsLow(node: ZwaveNode): boolean {
   return valuesOf(node).some((value) => isBatteryProperty(value, IS_LOW_PROPERTY))
 }

@@ -5,10 +5,16 @@ import type {
   IntegrationConfig,
   Logger,
   MultiLanguageMessage,
+  SceneActionFields,
+  SceneActionOutputs,
+  SceneEventData,
+  WidgetContent,
 } from '@gladysassistant/integration-sdk'
 
 import { resolveBroker, sameBroker, TOPIC_SETTINGS, type BrokerSettings } from '../config.ts'
-import { DeviceMapper } from '../mapping/DeviceMapper.ts'
+import { buildDeviceName, DeviceMapper } from '../mapping/DeviceMapper.ts'
+import { deviceSuffix } from '../mapping/externalId.ts'
+import { nodeStatus } from '../mapping/transport.ts'
 import { countEn, countFr } from '../plural.ts'
 import type {
   GetNodesResponse,
@@ -17,15 +23,19 @@ import type {
   ZwaveNode,
 } from '../types/zwave.ts'
 import { NodeRegistry } from '../zwave/NodeRegistry.ts'
+import { ZwaveApi } from '../zwave/ZwaveApi.ts'
 import { ZwaveJsUiClient } from '../zwave/ZwaveJsUiClient.ts'
 import { buildTopics, nodeEventName, type Topics } from '../zwave/topics.ts'
 import { CommandDispatcher } from './CommandDispatcher.ts'
+import { NetworkOperations } from './NetworkOperations.ts'
+import { buildNetworkWidget, NETWORK_WIDGET, NETWORK_WIDGET_ACTIONS } from './networkHealth.ts'
 import { StatePublisher } from './StatePublisher.ts'
 import { TransportPublisher } from './TransportPublisher.ts'
 
 /** Node events that make the cached network view stale. */
 const NODE_REFRESH_EVENTS = new Set(['node_ready', 'node_added', 'node_available'])
 const NODE_REMOVED_EVENT = 'node_removed'
+const NODE_ADDED_EVENT = 'node_added'
 const NODE_VALUE_UPDATED_EVENT = 'node_value_updated'
 /** Node events that only say the node status changed — they feed the transport badge. */
 const NODE_STATUS_EVENTS = new Set(['node_dead', 'node_alive', 'node_sleep', 'node_wakeup'])
@@ -39,6 +49,23 @@ const DISCOVERY_DEBOUNCE_MS = 500
  * one by one, and each announcement would otherwise ask for its own dump.
  */
 const RESYNC_DEBOUNCE_MS = 2000
+
+/**
+ * The core drops a widget refresh request arriving less than 10 s after the
+ * previous one. Requests are spaced accordingly, the last one of a burst held
+ * back rather than lost: it is the one describing the network as it is now.
+ */
+const WIDGET_NUDGE_MS = 10_000
+
+/** Battery command class: a level report may change the network widget. */
+const BATTERY_COMMAND_CLASS = 128
+
+/** Scene trigger keys, as declared in the manifest. */
+export const SCENE_TRIGGERS = {
+  NODE_DEAD: 'node_dead',
+  NODE_ALIVE: 'node_alive',
+  NODE_ADDED: 'node_added',
+} as const
 
 const NOT_CONFIGURED: MultiLanguageMessage = {
   en: 'MQTT broker not configured. Fill in the connection settings below.',
@@ -60,6 +87,8 @@ export class ZwaveIntegration {
   private readonly transports: TransportPublisher
   private readonly commands: CommandDispatcher
   private readonly client: ZwaveJsUiClient
+  private readonly api: ZwaveApi
+  private readonly operations: NetworkOperations
 
   /**
    * Feature ids per device, so an update REPLACES that device's set. Unioning
@@ -70,6 +99,14 @@ export class ZwaveIntegration {
   private knownFeatures = new Set<string>()
   private knownDevices = new Set<string>()
   private discoveryTimer: NodeJS.Timeout | undefined
+  private widgetTimer: NodeJS.Timeout | undefined
+  private widgetPending = false
+  /**
+   * A first `getNodes` answer arrived since the start. Before it, every node
+   * is "new" to the cache, and a `node_added` replayed by a zwave-js-ui
+   * restart must not read as an inclusion.
+   */
+  private networkReceived = false
   private resyncTimer: NodeJS.Timeout | undefined
   /** The network is logged once per start, not on every resynchronization. */
   private networkLogged = false
@@ -115,6 +152,12 @@ export class ZwaveIntegration {
       onDisconnected: (reason) => this.onBrokerDisconnected(reason),
       onMessage: (topic, payload) => this.onMessage(topic, payload),
     })
+
+    this.api = new ZwaveApi({
+      topics: () => this.topics,
+      publish: (topic, payload) => this.client.publish(topic, payload),
+    })
+    this.operations = new NetworkOperations(this.api, gladys.selector)
   }
 
   // -------------------------------------------------------------------------
@@ -127,6 +170,7 @@ export class ZwaveIntegration {
       const config = await this.gladys.getConfig()
       this.refreshKnownFeatures(this.gladys.devices)
       this.networkLogged = false
+      this.networkReceived = false
       // A reconnection may have hidden state changes: publish freely again,
       // and revive the publisher that the matching stop() put to sleep.
       this.states.reset()
@@ -166,6 +210,12 @@ export class ZwaveIntegration {
         clearTimeout(this.resyncTimer)
         this.resyncTimer = undefined
       }
+      if (this.widgetTimer) {
+        clearTimeout(this.widgetTimer)
+        this.widgetTimer = undefined
+        this.widgetPending = false
+      }
+      this.api.rejectAll('The integration is stopping')
       // Drains what is still publishable before the socket goes away.
       await this.states.stop()
       await this.transports.stop()
@@ -221,6 +271,7 @@ export class ZwaveIntegration {
   }
 
   private onBrokerDisconnected(reason: string): void {
+    this.api.rejectAll(`The MQTT broker connection was lost (${reason})`)
     void this.setStatus(false, {
       en: `Cannot reach the MQTT broker (${reason}).`,
       fr: `Broker MQTT injoignable (${reason}).`,
@@ -236,6 +287,12 @@ export class ZwaveIntegration {
       return
     }
 
+    // The answer to one of our API calls carries our request id back; nothing
+    // else does, not even the getNodes answer to our own requests.
+    if (this.api.handle(parsed)) {
+      return
+    }
+
     if (topic === this.topics.getNodesResponse) {
       void this.onNodes(parsed as GetNodesResponse)
       return
@@ -245,7 +302,7 @@ export class ZwaveIntegration {
     if (event === NODE_VALUE_UPDATED_EVENT) {
       this.onValueUpdated(parsed as NodeValueUpdatedEvent)
     } else if (event && NODE_REFRESH_EVENTS.has(event)) {
-      this.onNodeRefreshed(parsed as NodeEvent)
+      this.onNodeRefreshed(parsed as NodeEvent, event)
     } else if (event === NODE_REMOVED_EVENT) {
       this.onNodeRemoved(parsed as NodeEvent)
     } else if (event && NODE_STATUS_EVENTS.has(event)) {
@@ -268,7 +325,9 @@ export class ZwaveIntegration {
           'zwave-js-ui was probably still interviewing.',
       )
     }
+    this.networkReceived = true
     this.logNetworkOnce()
+    this.nudgeWidget()
     await this.publishDiscovered()
     this.publishKnownStates()
     this.publishTransports(this.registry.all())
@@ -340,15 +399,29 @@ export class ZwaveIntegration {
     // node has no values and no deviceId, and converters reason on both (the
     // battery low flag looks for the node's own flag, product variants on the
     // deviceId).
+    this.registry.applyValue(node.id, value.id, value.newValue)
     const cached = this.registry.get(node.id) ?? node
     this.states.push(this.mapper.convertValue(cached, value, value.newValue))
     this.publishTransports([cached])
+    if (value.commandClass === BATTERY_COMMAND_CLASS) {
+      this.nudgeWidget()
+    }
   }
 
-  private onNodeRefreshed(message: NodeEvent): void {
+  private onNodeRefreshed(message: NodeEvent, event: string): void {
     const [node] = message.data ?? []
     if (!node) {
       return
+    }
+    // An inclusion: a node the network did not have a moment ago. A node the
+    // cache already holds is zwave-js-ui re-announcing it after a restart.
+    if (
+      event === NODE_ADDED_EVENT &&
+      this.networkReceived &&
+      typeof node.id === 'number' &&
+      !this.registry.get(node.id)
+    ) {
+      this.fireTrigger(SCENE_TRIGGERS.NODE_ADDED, node)
     }
     // The event never carries the values, so a node that just finished its
     // interview — a fresh inclusion — would stay without features until the
@@ -370,6 +443,7 @@ export class ZwaveIntegration {
     // the badge frozen on whatever the node last reported.
     this.transports.push([this.mapper.toUnreachable(node.id)])
     this.requestDiscoveryPublication()
+    this.nudgeWidget()
   }
 
   private onNodeStatus(message: NodeEvent): void {
@@ -377,7 +451,60 @@ export class ZwaveIntegration {
     if (typeof node?.id !== 'number' || node.status === undefined) {
       return
     }
-    this.publishTransports([this.registry.setStatus(node.id, node.status)])
+    const before = nodeStatus(this.registry.get(node.id)?.status)
+    const updated = this.registry.setStatus(node.id, node.status)
+    this.publishTransports([updated])
+    this.nudgeWidget()
+
+    // One event per transition. `alive` is only a recovery when the node was
+    // dead: zwave-js also reports it when a node merely leaves the unknown
+    // state at startup, and a scene "node back online" must not run for every
+    // node each time Z-Wave JS UI restarts.
+    const after = nodeStatus(node.status)
+    if (!updated || after === before) {
+      return
+    }
+    if (after === 'dead') {
+      this.fireTrigger(SCENE_TRIGGERS.NODE_DEAD, updated)
+    } else if (after === 'alive' && before === 'dead') {
+      this.fireTrigger(SCENE_TRIGGERS.NODE_ALIVE, updated)
+    }
+  }
+
+  /** Fire a scene trigger about one node; a refused event only costs a log line. */
+  private fireTrigger(key: string, node: ZwaveNode): void {
+    const data: SceneEventData = {
+      device: this.gladys.externalId(deviceSuffix(node.id)),
+      node_id: node.id,
+      node_name: buildDeviceName(node),
+    }
+    this.gladys.publishSceneEvent(key, data).catch((error: unknown) => {
+      this.logger.warn(`Failed to fire the "${key}" scene trigger for node ${node.id}`, error)
+    })
+  }
+
+  /**
+   * Ask the dashboards to pull the network widget again, at most once every
+   * 10 s — see WIDGET_NUDGE_MS.
+   */
+  private nudgeWidget(): void {
+    if (this.widgetTimer) {
+      this.widgetPending = true
+      return
+    }
+    try {
+      this.gladys.requestWidgetRefresh(NETWORK_WIDGET)
+    } catch (error) {
+      this.logger.debug('Failed to request a widget refresh', error)
+    }
+    this.widgetTimer = setTimeout(() => {
+      this.widgetTimer = undefined
+      if (this.widgetPending) {
+        this.widgetPending = false
+        this.nudgeWidget()
+      }
+    }, WIDGET_NUDGE_MS)
+    this.widgetTimer.unref?.()
   }
 
   // -------------------------------------------------------------------------
@@ -426,6 +553,43 @@ export class ZwaveIntegration {
     this.transports.forget(device.external_id)
     this.featuresByDevice.delete(device.external_id)
     this.rebuildKnownFeatures()
+  }
+
+  /** A scene reached one of the manifest scene actions. */
+  runSceneAction(key: string, fields: SceneActionFields): Promise<SceneActionOutputs | undefined> {
+    return this.operations.run(key, fields)
+  }
+
+  /** Content of the network widget, in the language of whoever looks at it. */
+  networkWidget(language: string): WidgetContent {
+    return buildNetworkWidget(this.registry.all(), { language })
+  }
+
+  /** A button of the network widget was tapped. */
+  async networkWidgetAction(actionKey: string): Promise<MultiLanguageMessage> {
+    if (actionKey === NETWORK_WIDGET_ACTIONS.REFRESH) {
+      if (!this.client.connected) {
+        throw new Error('The MQTT broker is not connected')
+      }
+      this.client.requestNodes()
+      return {
+        en: 'Asked Z-Wave JS UI for the node list.',
+        fr: 'Liste des nœuds demandée à Z-Wave JS UI.',
+      }
+    }
+    if (actionKey === NETWORK_WIDGET_ACTIONS.REBUILD_ROUTES) {
+      const { started } = await this.operations.rebuildNetworkRoutes()
+      return started === true
+        ? {
+            en: 'Route rebuild started. It can take a while on a large network.',
+            fr: 'Reconstruction des routes lancée. Elle peut être longue sur un grand réseau.',
+          }
+        : {
+            en: 'Z-Wave JS UI did not start the route rebuild (one may already be running).',
+            fr: "Z-Wave JS UI n'a pas lancé la reconstruction (elle est peut-être déjà en cours).",
+          }
+    }
+    throw new Error(`Unknown widget action "${actionKey}"`)
   }
 
   /** Manifest action: report what the integration currently sees. */
