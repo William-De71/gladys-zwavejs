@@ -4,7 +4,9 @@
   "name": "Z-Wave JS UI",
   "description": {
     "en": "Control your Z-Wave network in Gladys through Z-Wave JS UI and MQTT.",
-    "fr": "Pilotez votre réseau Z-Wave dans Gladys via Z-Wave JS UI et MQTT."
+    "fr": "Pilotez votre réseau Z-Wave dans Gladys via Z-Wave JS UI et MQTT.",
+    "de": "Steuern Sie Ihr Z-Wave-Netz in Gladys über Z-Wave JS UI und MQTT.",
+    "es": "Controle su red Z-Wave en Gladys mediante Z-Wave JS UI y MQTT."
   },
   "version": "1.8.0",
   "docker_image": "ghcr.io/sescandell/gladys-zwavejs:1.8.0",
@@ -34,25 +36,33 @@
       "type": "section",
       "label": {
         "en": "Before you start",
-        "fr": "Avant de commencer"
+        "fr": "Avant de commencer",
+        "de": "Bevor Sie beginnen",
+        "es": "Antes de empezar"
       },
       "description": {
         "en": "This integration does not talk to your Z-Wave controller directly: it connects to a running Z-Wave JS UI through your MQTT broker. Install Z-Wave JS UI first, enable its MQTT gateway, and make sure both are reachable from Gladys.",
-        "fr": "Cette intégration ne parle pas directement à votre contrôleur Z-Wave : elle se connecte à un Z-Wave JS UI existant via votre broker MQTT. Installez d'abord Z-Wave JS UI, activez sa passerelle MQTT, et assurez-vous que les deux sont joignables depuis Gladys."
+        "fr": "Cette intégration ne parle pas directement à votre contrôleur Z-Wave : elle se connecte à un Z-Wave JS UI existant via votre broker MQTT. Installez d'abord Z-Wave JS UI, activez sa passerelle MQTT, et assurez-vous que les deux sont joignables depuis Gladys.",
+        "de": "Diese Integration spricht nicht direkt mit Ihrem Z-Wave-Controller: Sie verbindet sich über Ihren MQTT-Broker mit einem laufenden Z-Wave JS UI. Installieren Sie zuerst Z-Wave JS UI, aktivieren Sie dessen MQTT-Gateway und stellen Sie sicher, dass beide von Gladys aus erreichbar sind.",
+        "es": "Esta integración no habla directamente con su controlador Z-Wave: se conecta a un Z-Wave JS UI en marcha a través de su broker MQTT. Instale primero Z-Wave JS UI, active su pasarela MQTT y asegúrese de que ambos son accesibles desde Gladys."
       },
       "links": [
         {
           "url": "https://zwave-js.github.io/zwave-js-ui/#/getting-started/quick-start",
           "label": {
             "en": "Install Z-Wave JS UI",
-            "fr": "Installer Z-Wave JS UI"
+            "fr": "Installer Z-Wave JS UI",
+            "de": "Z-Wave JS UI installieren",
+            "es": "Instalar Z-Wave JS UI"
           }
         },
         {
           "url": "https://zwave-js.github.io/zwave-js-ui/#/guide/mqtt",
           "label": {
             "en": "Z-Wave JS UI MQTT gateway",
-            "fr": "Passerelle MQTT de Z-Wave JS UI"
+            "fr": "Passerelle MQTT de Z-Wave JS UI",
+            "de": "MQTT-Gateway von Z-Wave JS UI",
+            "es": "Pasarela MQTT de Z-Wave JS UI"
           }
         }
       ]
@@ -62,25 +72,33 @@
       "type": "section",
       "label": {
         "en": "Configure Z-Wave JS UI",
-        "fr": "Configurer Z-Wave JS UI"
+        "fr": "Configurer Z-Wave JS UI",
+        "de": "Z-Wave JS UI einrichten",
+        "es": "Configurar Z-Wave JS UI"
       },
       "description": {
         "en": "In the Z-Wave JS UI settings, MQTT section: set \"Name\" to zwave-js-ui and leave \"Prefix\" at zwave — the integration expects those exact values to build its topics. Then, in the Gateway section, set \"Topic type\" to Named topics and \"Payload type\" to Entire Z-Wave value Object, and enable Send Z-Wave events, Include Node info and Publish node details. Without these, no device state ever reaches Gladys. The two screenshots below show the expected settings.",
-        "fr": "Dans les réglages de Z-Wave JS UI, section MQTT : mettez « Name » à zwave-js-ui et laissez « Prefix » à zwave — l'intégration attend exactement ces valeurs pour construire ses topics. Puis, dans la section Gateway, mettez « Topic type » à Named topics et « Payload type » à Entire Z-Wave value Object, et activez Send Z-Wave events, Include Node info et Publish node details. Sans cela, aucun état d'appareil n'arrivera jusqu'à Gladys. Les deux captures ci-dessous montrent les réglages attendus."
+        "fr": "Dans les réglages de Z-Wave JS UI, section MQTT : mettez « Name » à zwave-js-ui et laissez « Prefix » à zwave — l'intégration attend exactement ces valeurs pour construire ses topics. Puis, dans la section Gateway, mettez « Topic type » à Named topics et « Payload type » à Entire Z-Wave value Object, et activez Send Z-Wave events, Include Node info et Publish node details. Sans cela, aucun état d'appareil n'arrivera jusqu'à Gladys. Les deux captures ci-dessous montrent les réglages attendus.",
+        "de": "In den Einstellungen von Z-Wave JS UI, Abschnitt MQTT: setzen Sie „Name“ auf zwave-js-ui und lassen Sie „Prefix“ auf zwave — die Integration erwartet genau diese Werte für ihre Topics. Setzen Sie dann im Abschnitt Gateway „Topic type“ auf Named topics und „Payload type“ auf Entire Z-Wave value Object, und aktivieren Sie Send Z-Wave events, Include Node info und Publish node details. Ohne diese Einstellungen erreicht kein Gerätezustand Gladys. Die beiden Bildschirmfotos unten zeigen die erwarteten Einstellungen.",
+        "es": "En los ajustes de Z-Wave JS UI, sección MQTT: ponga «Name» a zwave-js-ui y deje «Prefix» en zwave — la integración espera exactamente esos valores para construir sus topics. Después, en la sección Gateway, ponga «Topic type» a Named topics y «Payload type» a Entire Z-Wave value Object, y active Send Z-Wave events, Include Node info y Publish node details. Sin ellos, ningún estado de dispositivo llega a Gladys. Las dos capturas de abajo muestran los ajustes esperados."
       },
       "links": [
         {
           "url": "https://raw.githubusercontent.com/William-De71/gladys-zwavejs/master/docs/images/zwavejs-ui-mqtt-configuration.jpg",
           "label": {
             "en": "Screenshot: MQTT section",
-            "fr": "Capture : section MQTT"
+            "fr": "Capture : section MQTT",
+            "de": "Bildschirmfoto: Abschnitt MQTT",
+            "es": "Captura: sección MQTT"
           }
         },
         {
           "url": "https://raw.githubusercontent.com/William-De71/gladys-zwavejs/master/docs/images/zwavejs-ui-gateway-configuration.jpg",
           "label": {
             "en": "Screenshot: Gateway section",
-            "fr": "Capture : section Gateway"
+            "fr": "Capture : section Gateway",
+            "de": "Bildschirmfoto: Abschnitt Gateway",
+            "es": "Captura: sección Gateway"
           }
         }
       ]
@@ -91,15 +109,21 @@
       "required": true,
       "label": {
         "en": "MQTT broker URL",
-        "fr": "URL du broker MQTT"
+        "fr": "URL du broker MQTT",
+        "de": "URL des MQTT-Brokers",
+        "es": "URL del broker MQTT"
       },
       "description": {
         "en": "Address of the broker Z-Wave JS UI publishes to, protocol included.",
-        "fr": "Adresse du broker sur lequel Z-Wave JS UI publie, protocole inclus."
+        "fr": "Adresse du broker sur lequel Z-Wave JS UI publie, protocole inclus.",
+        "de": "Adresse des Brokers, an den Z-Wave JS UI veröffentlicht, mit Protokoll.",
+        "es": "Dirección del broker en el que publica Z-Wave JS UI, con el protocolo."
       },
       "placeholder": {
         "en": "mqtt://172.30.0.1:1884",
-        "fr": "mqtt://172.30.0.1:1884"
+        "fr": "mqtt://172.30.0.1:1884",
+        "de": "mqtt://172.30.0.1:1884",
+        "es": "mqtt://172.30.0.1:1884"
       }
     },
     {
@@ -107,11 +131,15 @@
       "type": "string",
       "label": {
         "en": "MQTT username",
-        "fr": "Utilisateur MQTT"
+        "fr": "Utilisateur MQTT",
+        "de": "MQTT-Benutzer",
+        "es": "Usuario MQTT"
       },
       "description": {
         "en": "Leave empty if your broker accepts anonymous connections.",
-        "fr": "Laissez vide si votre broker accepte les connexions anonymes."
+        "fr": "Laissez vide si votre broker accepte les connexions anonymes.",
+        "de": "Leer lassen, wenn Ihr Broker anonyme Verbindungen akzeptiert.",
+        "es": "Déjelo vacío si su broker acepta conexiones anónimas."
       }
     },
     {
@@ -119,7 +147,9 @@
       "type": "secret",
       "label": {
         "en": "MQTT password",
-        "fr": "Mot de passe MQTT"
+        "fr": "Mot de passe MQTT",
+        "de": "MQTT-Passwort",
+        "es": "Contraseña MQTT"
       }
     }
   ],
@@ -129,11 +159,15 @@
       "timeout_seconds": 20,
       "label": {
         "en": "Test the connection",
-        "fr": "Tester la connexion"
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
       },
       "description": {
         "en": "Check the MQTT link and report how many Z-Wave nodes are known.",
-        "fr": "Vérifie le lien MQTT et indique combien de nœuds Z-Wave sont connus."
+        "fr": "Vérifie le lien MQTT et indique combien de nœuds Z-Wave sont connus.",
+        "de": "Prüft die MQTT-Verbindung und meldet, wie viele Z-Wave-Knoten bekannt sind.",
+        "es": "Comprueba el enlace MQTT e indica cuántos nodos Z-Wave se conocen."
       }
     },
     {
@@ -141,11 +175,15 @@
       "timeout_seconds": 20,
       "label": {
         "en": "Log the computed devices",
-        "fr": "Journaliser les appareils calculés"
+        "fr": "Journaliser les appareils calculés",
+        "de": "Berechnete Geräte protokollieren",
+        "es": "Registrar los dispositivos calculados"
       },
       "description": {
         "en": "Write to the journal the devices and features this integration builds from the Z-Wave network — what Gladys is sent.",
-        "fr": "Écrit dans le journal les appareils et fonctionnalités que l'intégration construit à partir du réseau Z-Wave — ce qui est envoyé à Gladys."
+        "fr": "Écrit dans le journal les appareils et fonctionnalités que l'intégration construit à partir du réseau Z-Wave — ce qui est envoyé à Gladys.",
+        "de": "Schreibt die Geräte und Funktionen, die diese Integration aus dem Z-Wave-Netz erstellt, ins Protokoll — das, was an Gladys gesendet wird.",
+        "es": "Escribe en el registro los dispositivos y funciones que esta integración construye a partir de la red Z-Wave: lo que se envía a Gladys."
       }
     }
   ],

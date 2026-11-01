@@ -38,6 +38,8 @@ export function nodeStatus(raw: unknown): NodeStatus {
 const INTERVIEW_INCOMPLETE: MultiLanguageMessage = {
   en: 'Interview not complete: some features may be missing until the node finishes it.',
   fr: "Interview incomplète : des fonctionnalités peuvent manquer tant que le nœud ne l'a pas terminée.",
+  de: 'Interview nicht abgeschlossen: Funktionen können fehlen, bis der Knoten es beendet hat.',
+  es: 'Entrevista incompleta: pueden faltar funciones hasta que el nodo la termine.',
 }
 
 /**

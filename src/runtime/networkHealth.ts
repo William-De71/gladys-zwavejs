@@ -87,26 +87,67 @@ export function summarizeNetwork(nodes: readonly ZwaveNode[]): NetworkSummary {
 // Widget
 // ---------------------------------------------------------------------------
 
-/** The widget speaks French to French users, English to everybody else. */
-type Lang = 'fr' | 'en'
+/** The four languages of the integration; any other falls back to English. */
+type Lang = 'en' | 'fr' | 'de' | 'es'
 
-const TEXTS = {
-  nodes: { fr: 'Nœuds', en: 'Nodes' },
-  dead: { fr: 'Ne répondent plus', en: 'Not responding' },
-  lowBattery: { fr: 'Piles faibles', en: 'Low batteries' },
-  asleep: { fr: 'Endormis', en: 'Asleep' },
-  network: { fr: 'Réseau', en: 'Network' },
-  allGood: { fr: 'Aucun problème', en: 'No problem' },
-  deadNode: { fr: 'Ne répond plus', en: 'Not responding' },
-  lowBatteryNode: { fr: 'Pile faible', en: 'Low battery' },
-  interview: { fr: 'Interview incomplète', en: 'Interview incomplete' },
-  refresh: { fr: 'Actualiser', en: 'Refresh' },
-  rebuild: { fr: 'Réparer les routes', en: 'Rebuild routes' },
-  empty: {
-    fr: "Aucun nœud Z-Wave connu pour l'instant. Vérifiez la connexion au broker MQTT et la configuration de Z-Wave JS UI.",
-    en: 'No Z-Wave node known yet. Check the MQTT broker connection and the Z-Wave JS UI settings.',
+const LANGS: readonly Lang[] = ['en', 'fr', 'de', 'es']
+
+/** `fr-FR` → `fr`; a language the integration does not speak → `en`. */
+function languageOf(language: string): Lang {
+  const code = language.toLowerCase().slice(0, 2)
+  return LANGS.find((lang) => lang === code) ?? 'en'
+}
+
+/** Every text of the widget, in the four languages (asserted by the i18n test). */
+export const WIDGET_TEXTS = {
+  nodes: { en: 'Nodes', fr: 'Nœuds', de: 'Knoten', es: 'Nodos' },
+  dead: {
+    en: 'Not responding',
+    fr: 'Ne répondent plus',
+    de: 'Antworten nicht',
+    es: 'No responden',
   },
-} as const
+  lowBattery: {
+    en: 'Low batteries',
+    fr: 'Piles faibles',
+    de: 'Schwache Batterien',
+    es: 'Pilas bajas',
+  },
+  asleep: { en: 'Asleep', fr: 'Endormis', de: 'Schlafend', es: 'Dormidos' },
+  network: { en: 'Network', fr: 'Réseau', de: 'Netz', es: 'Red' },
+  allGood: { en: 'No problem', fr: 'Aucun problème', de: 'Kein Problem', es: 'Ningún problema' },
+  deadNode: {
+    en: 'Not responding',
+    fr: 'Ne répond plus',
+    de: 'Antwortet nicht',
+    es: 'No responde',
+  },
+  lowBatteryNode: { en: 'Low battery', fr: 'Pile faible', de: 'Batterie schwach', es: 'Pila baja' },
+  interview: {
+    en: 'Interview incomplete',
+    fr: 'Interview incomplète',
+    de: 'Interview unvollständig',
+    es: 'Entrevista incompleta',
+  },
+  refresh: { en: 'Refresh', fr: 'Actualiser', de: 'Aktualisieren', es: 'Actualizar' },
+  rebuild: {
+    en: 'Rebuild routes',
+    fr: 'Réparer les routes',
+    de: 'Routen neu aufbauen',
+    es: 'Reparar rutas',
+  },
+  more: { en: 'more', fr: 'autres', de: 'weitere', es: 'más' },
+  /** Unit of a silence counted in days. */
+  days: { en: 'd', fr: 'j', de: 'T', es: 'd' },
+  empty: {
+    en: 'No Z-Wave node known yet. Check the MQTT broker connection and the Z-Wave JS UI settings.',
+    fr: "Aucun nœud Z-Wave connu pour l'instant. Vérifiez la connexion au broker MQTT et la configuration de Z-Wave JS UI.",
+    de: 'Noch kein Z-Wave-Knoten bekannt. Prüfen Sie die Verbindung zum MQTT-Broker und die Einstellungen von Z-Wave JS UI.',
+    es: 'Todavía no se conoce ningún nodo Z-Wave. Compruebe la conexión con el broker MQTT y los ajustes de Z-Wave JS UI.',
+  },
+} as const satisfies Record<string, Readonly<Record<Lang, string>>>
+
+const TEXTS = WIDGET_TEXTS
 
 /** The status list holds 10 rows; the 10th says how many more there are. */
 const MAX_STATUS_ROWS = 10
@@ -117,7 +158,7 @@ function truncate(text: string, max = MAX_STATUS_TEXT): string {
   return text.length <= max ? text : `${text.slice(0, max - 1)}…`
 }
 
-/** "12 min", "5 h", "3 j" / "3 d" — a dead node's silence, at a glance. */
+/** "12 min", "5 h", "3 j" / "3 d" / "3 T" — a dead node's silence, at a glance. */
 function since(lastActive: number | undefined, now: number, lang: Lang): string | undefined {
   if (typeof lastActive !== 'number' || lastActive <= 0 || lastActive > now) {
     return undefined
@@ -130,7 +171,7 @@ function since(lastActive: number | undefined, now: number, lang: Lang): string 
   if (hours < 48) {
     return `${hours} h`
   }
-  return `${Math.floor(hours / 24)} ${lang === 'fr' ? 'j' : 'd'}`
+  return `${Math.floor(hours / 24)} ${TEXTS.days[lang]}`
 }
 
 function problemRow(
@@ -165,7 +206,7 @@ export function buildNetworkWidget(
   nodes: readonly ZwaveNode[],
   { language, now = Date.now() }: { language: string; now?: number },
 ): WidgetContent {
-  const lang: Lang = language.toLowerCase().startsWith('fr') ? 'fr' : 'en'
+  const lang = languageOf(language)
   const refresh: WidgetComponent = {
     type: 'button',
     label: TEXTS.refresh[lang],
@@ -190,7 +231,7 @@ export function buildNetworkWidget(
     const hidden = rows.length - (MAX_STATUS_ROWS - 1)
     rows.splice(MAX_STATUS_ROWS - 1, rows.length, {
       label: '…',
-      value: lang === 'fr' ? `${hidden} autres` : `${hidden} more`,
+      value: `${hidden} ${TEXTS.more[lang]}`,
       color: WIDGET_COLORS.NEUTRAL,
     })
   }

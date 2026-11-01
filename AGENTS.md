@@ -36,6 +36,26 @@ type checker and the image ships the sources as written. There is no `dist/`.
 
 Before proposing a change: `npm run typecheck && npm run lint && npm test`.
 
+**Versions belong to the Release workflow.** Never edit `version` in
+`package.json`, the lockfile or the manifest, nor the `docker_image` tag: every
+push on `master` runs `release.yml`, which computes the version from the
+Conventional Commits since the last `v*` tag, writes them and publishes the
+image before `master` announces it.
+
+**Changelog.** Ne jamais éditer CHANGELOG.md à la main, il est généré à la
+release. Écris le titre de PR comme la ligne que l'utilisateur lira. Commits
+and PR titles follow Conventional Commits, in English.
+
+**Four languages.** Every text a user reads exists in English, French,
+German and Spanish: the manifest, the messages of the code (connection status,
+toasts, transport badge, `WIDGET_TEXTS` of the widget), `docs/{en,fr,de,es}.md`
+and `README{,.fr,.de,.es}.md`, with the same headings. `test/i18n.test.ts`
+fails on a missing language.
+
+**Never in the store.** This fork is personal: the repository must never carry
+the `gladys-assistant-integration` topic (the `verify` job of `release.yml`
+fails if it does).
+
 ---
 
 ## The command class registry
@@ -314,7 +334,9 @@ feature missing?", and it is small enough to paste into a bug report.
 
 ## Tests
 
-`npm test` runs `node --test` over `test/**/*.test.ts`. No framework, no mocks
+`npm test` runs `node --test` over `test/**/*.test.ts`, plus
+`test/release.test.js` for the release script (plain JavaScript, like the
+script it tests). No framework, no mocks
 beyond `test/helpers/fakes.ts`.
 
 **Fixtures are real dumps** captured from live networks, in `test/fixtures/`.

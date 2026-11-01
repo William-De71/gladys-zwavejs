@@ -15,7 +15,7 @@ import { resolveBroker, sameBroker, TOPIC_SETTINGS, type BrokerSettings } from '
 import { buildDeviceName, DeviceMapper } from '../mapping/DeviceMapper.ts'
 import { deviceSuffix } from '../mapping/externalId.ts'
 import { nodeStatus } from '../mapping/transport.ts'
-import { countEn, countFr } from '../plural.ts'
+import { countDe, countEn, countEs, countFr } from '../plural.ts'
 import type {
   GetNodesResponse,
   NodeEvent,
@@ -70,6 +70,8 @@ export const SCENE_TRIGGERS = {
 const NOT_CONFIGURED: MultiLanguageMessage = {
   en: 'MQTT broker not configured. Fill in the connection settings below.',
   fr: 'Broker MQTT non configuré. Renseignez les paramètres de connexion ci-dessous.',
+  de: 'MQTT-Broker nicht konfiguriert. Füllen Sie die Verbindungseinstellungen unten aus.',
+  es: 'Broker MQTT sin configurar. Rellene los ajustes de conexión de abajo.',
 }
 
 /**
@@ -256,6 +258,8 @@ export class ZwaveIntegration {
       this.brokerError = {
         en: `Invalid MQTT broker settings (${reason}). Check the URL includes a protocol, e.g. mqtt://host:1883.`,
         fr: `Paramètres du broker MQTT invalides (${reason}). Vérifiez que l'URL comporte un protocole, par exemple mqtt://hote:1883.`,
+        de: `Ungültige MQTT-Broker-Einstellungen (${reason}). Prüfen Sie, dass die URL ein Protokoll enthält, z. B. mqtt://host:1883.`,
+        es: `Ajustes del broker MQTT no válidos (${reason}). Compruebe que la URL incluye un protocolo, por ejemplo mqtt://host:1883.`,
       }
       await this.setStatus(false, this.brokerError)
     }
@@ -275,6 +279,8 @@ export class ZwaveIntegration {
     void this.setStatus(false, {
       en: `Cannot reach the MQTT broker (${reason}).`,
       fr: `Broker MQTT injoignable (${reason}).`,
+      de: `MQTT-Broker nicht erreichbar (${reason}).`,
+      es: `Broker MQTT inaccesible (${reason}).`,
     })
   }
 
@@ -575,6 +581,8 @@ export class ZwaveIntegration {
       return {
         en: 'Asked Z-Wave JS UI for the node list.',
         fr: 'Liste des nœuds demandée à Z-Wave JS UI.',
+        de: 'Knotenliste bei Z-Wave JS UI angefordert.',
+        es: 'Lista de nodos solicitada a Z-Wave JS UI.',
       }
     }
     if (actionKey === NETWORK_WIDGET_ACTIONS.REBUILD_ROUTES) {
@@ -583,10 +591,14 @@ export class ZwaveIntegration {
         ? {
             en: 'Route rebuild started. It can take a while on a large network.',
             fr: 'Reconstruction des routes lancée. Elle peut être longue sur un grand réseau.',
+            de: 'Neuaufbau der Routen gestartet. In einem großen Netz kann er dauern.',
+            es: 'Reconstrucción de rutas iniciada. Puede tardar en una red grande.',
           }
         : {
             en: 'Z-Wave JS UI did not start the route rebuild (one may already be running).',
             fr: "Z-Wave JS UI n'a pas lancé la reconstruction (elle est peut-être déjà en cours).",
+            de: 'Z-Wave JS UI hat den Neuaufbau nicht gestartet (vielleicht läuft er bereits).',
+            es: 'Z-Wave JS UI no ha iniciado la reconstrucción (quizá ya esté en curso).',
           }
     }
     throw new Error(`Unknown widget action "${actionKey}"`)
@@ -605,12 +617,16 @@ export class ZwaveIntegration {
       return {
         en: `Not connected to the MQTT broker at ${this.broker.url}.`,
         fr: `Non connecté au broker MQTT ${this.broker.url}.`,
+        de: `Nicht mit dem MQTT-Broker ${this.broker.url} verbunden.`,
+        es: `Sin conexión con el broker MQTT ${this.broker.url}.`,
       }
     }
     const count = this.registry.size
     return {
       en: `Connected to ${this.broker.url}. ${countEn(count, 'Z-Wave node', 'Z-Wave nodes')} known.`,
       fr: `Connecté à ${this.broker.url}. ${countFr(count, 'nœud Z-Wave connu', 'nœuds Z-Wave connus')}.`,
+      de: `Verbunden mit ${this.broker.url}. ${countDe(count, 'Z-Wave-Knoten', 'Z-Wave-Knoten')} bekannt.`,
+      es: `Conectado a ${this.broker.url}. ${countEs(count, 'nodo Z-Wave conocido', 'nodos Z-Wave conocidos')}.`,
     }
   }
 
@@ -632,6 +648,8 @@ export class ZwaveIntegration {
       return {
         en: 'No Z-Wave node known yet. Check the connection first.',
         fr: "Aucun nœud Z-Wave connu pour l'instant. Vérifiez d'abord la connexion.",
+        de: 'Noch kein Z-Wave-Knoten bekannt. Prüfen Sie zuerst die Verbindung.',
+        es: 'Todavía no se conoce ningún nodo Z-Wave. Compruebe primero la conexión.',
       }
     }
 
@@ -641,6 +659,8 @@ export class ZwaveIntegration {
     return {
       en: `${countEn(devices.length, 'device', 'devices')} written to the journal.`,
       fr: `${countFr(devices.length, 'appareil écrit', 'appareils écrits')} dans le journal.`,
+      de: `${countDe(devices.length, 'Gerät', 'Geräte')} ins Protokoll geschrieben.`,
+      es: `${countEs(devices.length, 'dispositivo escrito', 'dispositivos escritos')} en el registro.`,
     }
   }
 
