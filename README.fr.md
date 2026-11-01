@@ -213,7 +213,7 @@ flowchart LR
   P["push sur master"] --> C["CI"] --> V["version + CHANGELOG"] --> T["tag vX.Y.Z"] --> B["image :X.Y.Z + :latest"] --> M["master avancé"] --> R["release GitHub"] --> K["vérifications"]
 ```
 
-Les versions jusqu'à 1.8.0 ont été publiées par le dépôt d'origine ; ce fork reprend à partir de là.
+Les versions du dépôt d'origine (jusqu'à 1.8.0) sont publiées par sescandell. Les versions de ce fork commencent à 1.9.0 ; sa propre 1.8.0, publiée par erreur sous le numéro d'origine, est le même code que la 1.9.0.
 
 ## En cas de problème
 

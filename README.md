@@ -213,7 +213,7 @@ flowchart LR
   P["push on master"] --> C["CI"] --> V["version + CHANGELOG"] --> T["tag vX.Y.Z"] --> B["image :X.Y.Z + :latest"] --> M["master moved"] --> R["GitHub Release"] --> K["checks"]
 ```
 
-Versions up to 1.8.0 were released upstream; this fork continues from there.
+Upstream versions (up to 1.8.0) are released by sescandell. This fork's releases start at 1.9.0; its own 1.8.0, published by mistake under the upstream number, is the same code as 1.9.0.
 
 ## Troubleshooting
 

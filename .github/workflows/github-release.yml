@@ -52,8 +52,8 @@ jobs:
             if grep -qxF "$tag" <<<"$existing"; then
               continue
             fi
-            # Tags up to v1.8.0 come from upstream (no CHANGELOG.md): their
-            # releases are sescandell's, never recreated on this fork.
+            # A tag fetched from upstream carries no CHANGELOG.md: its release
+            # is sescandell's, never recreated on this fork.
             if ! git cat-file -e "${tag}:CHANGELOG.md" 2>/dev/null; then
               continue
             fi

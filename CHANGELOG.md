@@ -5,8 +5,10 @@ follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/). This file is generated at
 each release from the Conventional Commits: do not edit it by hand.
 
-Versions up to 1.8.0 were released upstream, by
-[sescandell/gladys-zwavejs](https://github.com/sescandell/gladys-zwavejs/releases).
+Upstream versions (up to 1.8.0) are released by
+[sescandell/gladys-zwavejs](https://github.com/sescandell/gladys-zwavejs/releases). The
+1.8.0 below is this fork's first release, published by mistake under the upstream number:
+1.9.0 is the same code under its own number.
 
 ## [1.9.0] - 2026-11-01
 

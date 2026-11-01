@@ -15,7 +15,7 @@
 #
 # Versions: feat -> minor, fix/perf -> patch, breaking -> major (a minor below
 # 1.0.0). docs/chore/ci/test/style/refactor/build alone release nothing. The
-# base is the last `v*` tag (v1.8.0, the last upstream release, on this fork).
+# base is the last `v*` tag of this fork (its first release was 1.8.0, re-released as 1.9.0).
 #
 # Manual run (Actions -> Release -> Run workflow):
 #   - release-as: force a version, e.g. 2.0.0 (the maintainer's decision);
